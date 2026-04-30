@@ -1,0 +1,583 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple: #7F77DD;
+    --purple-dark: #3C3489;
+    --teal: #1D9E75;
+    --teal-dark: #0F6E56;
+    --coral: #D85A30;
+    --amber: #EF9F27;
+    --green: #3B6D11;
+    --green-light: #C0DD97;
+    --red: #E24B4A;
+    --yellow: #EF9F27;
+    --gray-light: #F1EFE8;
+    --border: var(--color-border-tertiary);
+    --bg: var(--color-background-primary);
+    --bg2: var(--color-background-secondary);
+    --bg3: var(--color-background-tertiary);
+    --text: var(--color-text-primary);
+    --muted: var(--color-text-secondary);
+  }
+
+  .hub { font-family: 'DM Sans', sans-serif; color: var(--text); padding: 0 0 2rem; }
+
+  .hub-header {
+    text-align: center;
+    padding: 1.5rem 1rem 1rem;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .hub-title { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; color: var(--purple); line-height: 1; }
+  .hub-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem; padding: 0 1rem; }
+  .tab-btn {
+    padding: 8px 20px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    border: 0.5px solid var(--border); background: var(--bg2); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+  .game-panel { display: none; }
+  .game-panel.active { display: block; }
+
+  /* ========== STREAMERDOKU ========== */
+  .doku-wrap { padding: 0 1rem; }
+  .doku-info { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 1rem; }
+
+  .doku-grid-outer {
+    overflow-x: auto;
+    border: 2px solid var(--purple);
+    border-radius: var(--border-radius-lg);
+    background: var(--bg);
+  }
+
+  .doku-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(3, 1fr);
+    grid-template-rows: auto repeat(3, 1fr);
+    min-width: 380px;
+  }
+
+  .doku-corner { background: var(--purple-dark); border-radius: 10px 0 0 0; }
+  .doku-col-header {
+    background: var(--purple);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    padding: 8px 4px;
+    border-left: 0.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .doku-col-header:last-child { border-radius: 0 10px 0 0; }
+  .doku-row-header {
+    background: var(--purple);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px;
+    border-top: 0.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .doku-row-header:last-child { border-radius: 0 0 0 10px; }
+
+  .doku-cell {
+    border-left: 0.5px solid var(--border);
+    border-top: 0.5px solid var(--border);
+    min-height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+    padding: 4px;
+  }
+  .doku-cell:hover { background: var(--bg2); }
+  .doku-cell.filled { background: #EEEDFE; cursor: default; }
+  .doku-cell.filled:hover { background: #CECBF6; }
+  .doku-cell .cell-name { font-size: 11px; font-weight: 500; text-align: center; color: var(--purple-dark); line-height: 1.3; }
+  .doku-cell .cell-hint { font-size: 9px; color: #7F77DD; }
+  .doku-cell.wrong { background: #FCEBEB; animation: shake 0.3s; }
+  .doku-cell.wrong .cell-name { color: var(--red); }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .doku-score-row { display: flex; justify-content: center; gap: 2rem; margin: 1rem 0 0.5rem; }
+  .doku-score-item { text-align: center; }
+  .doku-score-item .val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--purple); }
+  .doku-score-item .lbl { font-size: 11px; color: var(--muted); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--bg); border-radius: var(--border-radius-lg);
+    border: 0.5px solid var(--border); padding: 1.25rem; width: 320px; max-width: 90vw;
+  }
+  .modal-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .modal-search { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; background: var(--bg2); color: var(--text); margin-bottom: 8px; }
+  .modal-list { max-height: 200px; overflow-y: auto; }
+  .modal-item { padding: 8px 10px; font-size: 13px; cursor: pointer; border-radius: 6px; }
+  .modal-item:hover { background: var(--bg2); }
+  .modal-item .platform-tag { font-size: 10px; color: var(--muted); margin-left: 4px; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .modal-btn { flex: 1; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; background: var(--bg2); color: var(--text); }
+  .modal-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+  /* ========== STREAMERDLE ========== */
+  .dle-wrap { padding: 0 1rem; }
+  .dle-target-info { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 1rem; }
+
+  .dle-input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .dle-input { flex: 1; padding: 9px 12px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; background: var(--bg2); color: var(--text); }
+  .dle-guess-btn { padding: 9px 16px; background: var(--purple); color: #fff; border: none; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 500; cursor: pointer; }
+  .dle-guess-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .dle-autocomplete { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--border-radius-md); overflow: hidden; margin-bottom: 8px; display: none; }
+  .dle-autocomplete.open { display: block; }
+  .dle-ac-item { padding: 8px 12px; font-size: 13px; cursor: pointer; }
+  .dle-ac-item:hover { background: var(--bg2); }
+
+  .dle-legend { display: flex; gap: 12px; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
+  .dle-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .dle-legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  .dle-guess-header {
+    display: grid;
+    grid-template-columns: 90px repeat(6, 1fr);
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+  .dle-gh-cell { font-size: 10px; color: var(--muted); text-align: center; font-weight: 500; padding: 2px; }
+
+  .dle-guess-row {
+    display: grid;
+    grid-template-columns: 90px repeat(6, 1fr);
+    gap: 3px;
+    margin-bottom: 3px;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .dle-name-cell {
+    background: var(--bg2); border-radius: 6px; padding: 6px 4px;
+    font-size: 11px; font-weight: 500; text-align: center;
+    border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center;
+  }
+  .dle-stat-cell {
+    border-radius: 6px; padding: 4px 2px; font-size: 10px; font-weight: 500;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 44px; text-align: center; line-height: 1.2;
+  }
+  .dle-stat-cell.correct { background: var(--teal); color: #fff; }
+  .dle-stat-cell.close { background: var(--amber); color: #fff; }
+  .dle-stat-cell.wrong { background: #B4B2A9; color: #fff; }
+  .dle-stat-cell .arrow { font-size: 14px; display: block; }
+
+  .dle-win-msg {
+    text-align: center; padding: 1rem;
+    background: #EAF3DE; border-radius: var(--border-radius-md);
+    border: 0.5px solid #97C459; margin-top: 0.5rem; display: none;
+  }
+  .dle-win-msg.show { display: block; }
+  .dle-win-msg .wt { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--green); }
+  .dle-lose-msg { background: #FCEBEB; border-color: #F09595; color: var(--red); }
+
+  .dle-new-btn { display: block; margin: 0.75rem auto 0; padding: 8px 20px; background: var(--bg2); color: var(--text); border: 0.5px solid var(--border); border-radius: 999px; font-size: 13px; cursor: pointer; }
+
+  .attempts-bar { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 0.5rem; }
+</style>
+
+<div class="hub">
+  <div class="hub-header">
+    <div class="hub-title">STREAMERDLE</div>
+    <div class="hub-sub">Two games · One streamer universe</div>
+  </div>
+
+  <div class="game-tabs">
+    <button class="tab-btn active" onclick="switchTab('doku')">StreamerDoku</button>
+    <button class="tab-btn" onclick="switchTab('dle')">StreamerDle</button>
+  </div>
+
+  <!-- STREAMERDOKU -->
+  <div class="game-panel active" id="panel-doku">
+    <div class="doku-wrap">
+      <div class="doku-score-row">
+        <div class="doku-score-item"><div class="val" id="doku-filled">0</div><div class="lbl">Filled</div></div>
+        <div class="doku-score-item"><div class="val" id="doku-remain">9</div><div class="lbl">Remaining</div></div>
+        <div class="doku-score-item"><div class="val" id="doku-guesses">0</div><div class="lbl">Guesses</div></div>
+      </div>
+      <div class="doku-info">Find a streamer that fits BOTH the row and column criteria</div>
+      <div class="doku-grid-outer">
+        <div class="doku-grid" id="doku-grid"></div>
+      </div>
+      <div style="text-align:center;margin-top:0.75rem;">
+        <button class="dle-new-btn" onclick="initDoku()">New Puzzle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STREAMERDLE -->
+  <div class="game-panel" id="panel-dle">
+    <div class="dle-wrap">
+      <div class="dle-target-info">Guess today's mystery streamer! You have 8 attempts.</div>
+
+      <div class="dle-legend">
+        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:var(--teal)"></div>Correct</div>
+        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:var(--amber)"></div>Close</div>
+        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:#B4B2A9"></div>Wrong</div>
+      </div>
+
+      <div style="position:relative;">
+        <div class="dle-input-row">
+          <input class="dle-input" id="dle-input" type="text" placeholder="Type a streamer name..." autocomplete="off" oninput="dleAutocomplete()" onkeydown="if(event.key==='Enter')dleGuess()">
+          <button class="dle-guess-btn" id="dle-btn" onclick="dleGuess()">Guess</button>
+        </div>
+        <div class="dle-autocomplete" id="dle-ac"></div>
+      </div>
+
+      <div class="dle-guess-header" id="dle-header">
+        <div class="dle-gh-cell"></div>
+        <div class="dle-gh-cell">Category</div>
+        <div class="dle-gh-cell">Views</div>
+        <div class="dle-gh-cell">Platform</div>
+        <div class="dle-gh-cell">Age</div>
+        <div class="dle-gh-cell">Gender</div>
+        <div class="dle-gh-cell">Height</div>
+      </div>
+
+      <div id="dle-rows"></div>
+
+      <div class="dle-win-msg" id="dle-win"></div>
+      <button class="dle-new-btn" id="dle-new-btn" style="display:none" onclick="initDle()">New Streamer</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOKU MODAL (faux viewport) -->
+<div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);display:none;" id="doku-modal-overlay">
+  <div class="modal-box" id="doku-modal">
+    <div class="modal-title" id="modal-title">Who fits this cell?</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <input class="modal-search" id="modal-search" type="text" placeholder="Search streamer..." oninput="filterModalList()" autocomplete="off">
+    <div class="modal-list" id="modal-list"></div>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STREAMERS = [
+  { name: "Ninja",        platform: "Twitch",  category: "FPS",       views: 60000,  yt: 24000000, age: 33, gender: "M", height: 183 },
+  { name: "xQc",          platform: "Kick",    category: "Variety",   views: 80000,  yt: 2200000,  age: 28, gender: "M", height: 185 },
+  { name: "Pokimane",     platform: "Twitch",  category: "Variety",   views: 20000,  yt: 7000000,  age: 28, gender: "F", height: 165 },
+  { name: "Shroud",       platform: "Twitch",  category: "FPS",       views: 30000,  yt: 7800000,  age: 30, gender: "M", height: 180 },
+  { name: "Valkyrae",     platform: "YouTube", category: "Variety",   views: 15000,  yt: 4000000,  age: 30, gender: "F", height: 168 },
+  { name: "HasanAbi",     platform: "Twitch",  category: "IRL/Politics", views: 25000, yt: 1200000, age: 32, gender: "M", height: 193 },
+  { name: "Sykkuno",      platform: "YouTube", category: "Variety",   views: 8000,   yt: 3000000,  age: 31, gender: "M", height: 178 },
+  { name: "Ludwig",       platform: "YouTube", category: "Variety",   views: 12000,  yt: 4500000,  age: 27, gender: "M", height: 180 },
+  { name: "Mizkif",       platform: "Twitch",  category: "IRL",       views: 15000,  yt: 600000,   age: 28, gender: "M", height: 178 },
+  { name: "NICKMERCS",    platform: "Twitch",  category: "FPS",       views: 35000,  yt: 6500000,  age: 34, gender: "M", height: 178 },
+  { name: "TimTheTatman", platform: "YouTube", category: "Variety",   views: 18000,  yt: 4000000,  age: 34, gender: "M", height: 188 },
+  { name: "Amouranth",    platform: "Twitch",  category: "IRL",       views: 12000,  yt: 1200000,  age: 30, gender: "F", height: 165 },
+  { name: "AdinRoss",     platform: "Kick",    category: "IRL",       views: 40000,  yt: 3000000,  age: 23, gender: "M", height: 178 },
+  { name: "Lacy",         platform: "Twitch",  category: "Variety",   views: 1200,   yt: 750000,   age: 21, gender: "F", height: 163 },
+  { name: "Kai Cenat",    platform: "Twitch",  category: "Variety",   views: 100000, yt: 6000000,  age: 22, gender: "M", height: 168 },
+  { name: "IShowSpeed",   platform: "YouTube", category: "Variety",   views: 0,      yt: 22000000, age: 19, gender: "M", height: 178 },
+  { name: "Jynxzi",       platform: "Twitch",  category: "FPS",       views: 40000,  yt: 2000000,  age: 20, gender: "M", height: 185 },
+  { name: "BobbyPoff",    platform: "Twitch",  category: "Variety",   views: 600,    yt: 700000,   age: 25, gender: "M", height: 183 },
+  { name: "LosPollosTV",  platform: "Kick",    category: "IRL",       views: 8000,   yt: 800000,   age: 31, gender: "M", height: 180 },
+  { name: "Clix",         platform: "Twitch",  category: "FPS",       views: 20000,  yt: 2500000,  age: 18, gender: "M", height: 175 },
+  { name: "Moistcr1tikal",platform: "Twitch",  category: "Variety",   views: 30000,  yt: 16000000, age: 28, gender: "M", height: 188 },
+  { name: "Asmongold",    platform: "Twitch",  category: "MMO/RPG",   views: 25000,  yt: 2100000,  age: 34, gender: "M", height: 183 },
+  { name: "Lirik",        platform: "Twitch",  category: "Variety",   views: 8000,   yt: 400000,   age: 34, gender: "M", height: 185 },
+  { name: "CourageJD",    platform: "YouTube", category: "Variety",   views: 5000,   yt: 3200000,  age: 30, gender: "M", height: 183 },
+  { name: "Alinity",      platform: "Twitch",  category: "Variety",   views: 5000,   yt: 300000,   age: 34, gender: "F", height: 168 },
+  { name: "Saqib",        platform: "Twitch",  category: "FPS",       views: 3000,   yt: 650000,   age: 26, gender: "M", height: 178 },
+  { name: "Quinn",        platform: "YouTube", category: "Variety",   views: 2500,   yt: 780000,   age: 23, gender: "F", height: 165 },
+  { name: "Nicki Taylor", platform: "Twitch",  category: "IRL",       views: 800,    yt: 620000,   age: 27, gender: "F", height: 170 },
+];
+
+// ===== STREAMERDOKU =====
+const DOKU_COLS = [
+  { label: "Twitch Main", check: s => s.platform === "Twitch" },
+  { label: "YouTube Main", check: s => s.platform === "YouTube" },
+  { label: "Kick/Other", check: s => s.platform === "Kick" },
+];
+const DOKU_ROWS = [
+  { label: "200-800 Live Views", check: s => s.views >= 200 && s.views <= 800 },
+  { label: "5k-40k Live Views", check: s => s.views > 800 && s.views <= 40000 },
+  { label: "600k-800k YT Subs", check: s => s.yt >= 600000 && s.yt <= 800000 },
+];
+
+let dokuState = {};
+let dokuGuessCount = 0;
+let currentCell = null;
+
+function initDoku() {
+  dokuState = {};
+  dokuGuessCount = 0;
+  renderDokuGrid();
+  updateDokuScore();
+}
+
+function renderDokuGrid() {
+  const grid = document.getElementById('doku-grid');
+  grid.innerHTML = '';
+
+  const corner = document.createElement('div');
+  corner.className = 'doku-corner';
+  grid.appendChild(corner);
+
+  DOKU_COLS.forEach(c => {
+    const h = document.createElement('div');
+    h.className = 'doku-col-header';
+    h.textContent = c.label;
+    grid.appendChild(h);
+  });
+
+  DOKU_ROWS.forEach((row, ri) => {
+    const rh = document.createElement('div');
+    rh.className = 'doku-row-header';
+    rh.textContent = row.label;
+    grid.appendChild(rh);
+
+    DOKU_COLS.forEach((col, ci) => {
+      const key = `${ri}-${ci}`;
+      const cell = document.createElement('div');
+      cell.className = 'doku-cell' + (dokuState[key] ? ' filled' : '');
+      cell.id = 'dc-' + key;
+      if (dokuState[key]) {
+        cell.innerHTML = `<div class="cell-name">${dokuState[key]}</div>`;
+      } else {
+        cell.innerHTML = `<span style="font-size:20px;color:var(--border)">+</span>`;
+        cell.onclick = () => openDokuModal(ri, ci);
+      }
+      grid.appendChild(cell);
+    });
+  });
+}
+
+function openDokuModal(ri, ci) {
+  currentCell = { ri, ci };
+  const row = DOKU_ROWS[ri], col = DOKU_COLS[ci];
+  document.getElementById('modal-title').textContent = 'Who fits this cell?';
+  document.getElementById('modal-sub').textContent = `${row.label} + ${col.label}`;
+  document.getElementById('modal-search').value = '';
+  renderModalList('');
+  document.getElementById('doku-modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('doku-modal-overlay').style.display = 'none';
+}
+
+function renderModalList(filter) {
+  const used = Object.values(dokuState);
+  const list = document.getElementById('modal-list');
+  const matches = STREAMERS.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) && !used.includes(s.name));
+  list.innerHTML = matches.map(s =>
+    `<div class="modal-item" onclick="pickStreamer('${s.name}')">${s.name} <span class="platform-tag">${s.platform}</span></div>`
+  ).join('') || '<div style="padding:8px;font-size:12px;color:var(--muted)">No results</div>';
+}
+
+function filterModalList() {
+  renderModalList(document.getElementById('modal-search').value);
+}
+
+function pickStreamer(name) {
+  const { ri, ci } = currentCell;
+  const key = `${ri}-${ci}`;
+  const s = STREAMERS.find(x => x.name === name);
+  dokuGuessCount++;
+
+  if (DOKU_ROWS[ri].check(s) && DOKU_COLS[ci].check(s)) {
+    dokuState[key] = name;
+    closeModal();
+    renderDokuGrid();
+    updateDokuScore();
+    if (Object.keys(dokuState).length === 9) {
+      setTimeout(() => alert('Incredible! You completed the StreamerDoku grid!'), 100);
+    }
+  } else {
+    const cell = document.getElementById('dc-' + key);
+    if (cell) { cell.classList.add('wrong'); setTimeout(() => cell.classList.remove('wrong'), 600); }
+    const li = document.getElementById('modal-list');
+    li.innerHTML = `<div style="padding:8px;font-size:12px;color:var(--red);font-weight:500">${name} doesn't fit! Try again.</div>` + li.innerHTML;
+    updateDokuScore();
+  }
+}
+
+function updateDokuScore() {
+  const f = Object.keys(dokuState).length;
+  document.getElementById('doku-filled').textContent = f;
+  document.getElementById('doku-remain').textContent = 9 - f;
+  document.getElementById('doku-guesses').textContent = dokuGuessCount;
+}
+
+// ===== STREAMERDLE =====
+let dleTarget = null;
+let dleGuesses = [];
+const MAX_GUESSES = 8;
+
+const CATS = ["FPS","Variety","IRL","IRL/Politics","MMO/RPG"];
+const PLATS = ["Twitch","YouTube","Kick"];
+
+function initDle() {
+  dleTarget = STREAMERS[Math.floor(Math.random() * STREAMERS.length)];
+  dleGuesses = [];
+  document.getElementById('dle-rows').innerHTML = '';
+  document.getElementById('dle-input').value = '';
+  document.getElementById('dle-input').disabled = false;
+  document.getElementById('dle-btn').disabled = false;
+  document.getElementById('dle-win').style.display = 'none';
+  document.getElementById('dle-win').className = 'dle-win-msg';
+  document.getElementById('dle-new-btn').style.display = 'none';
+  document.getElementById('dle-ac').className = 'dle-autocomplete';
+  document.getElementById('dle-header').style.display = 'grid';
+}
+
+function dleAutocomplete() {
+  const val = document.getElementById('dle-input').value.toLowerCase();
+  const ac = document.getElementById('dle-ac');
+  if (!val) { ac.className = 'dle-autocomplete'; return; }
+  const used = dleGuesses.map(g => g.name);
+  const matches = STREAMERS.filter(s => s.name.toLowerCase().includes(val) && !used.includes(s.name)).slice(0, 6);
+  if (!matches.length) { ac.className = 'dle-autocomplete'; return; }
+  ac.innerHTML = matches.map(s => `<div class="dle-ac-item" onclick="selectAc('${s.name}')">${s.name}</div>`).join('');
+  ac.className = 'dle-autocomplete open';
+}
+
+function selectAc(name) {
+  document.getElementById('dle-input').value = name;
+  document.getElementById('dle-ac').className = 'dle-autocomplete';
+}
+
+function dleGuess() {
+  const val = document.getElementById('dle-input').value.trim();
+  const s = STREAMERS.find(x => x.name.toLowerCase() === val.toLowerCase());
+  if (!s) { alert('Streamer not found in the list!'); return; }
+  if (dleGuesses.find(g => g.name === s.name)) { alert('Already guessed!'); return; }
+
+  dleGuesses.push(s);
+  document.getElementById('dle-input').value = '';
+  document.getElementById('dle-ac').className = 'dle-autocomplete';
+
+  renderDleRow(s);
+
+  if (s.name === dleTarget.name) {
+    endDle(true);
+  } else if (dleGuesses.length >= MAX_GUESSES) {
+    endDle(false);
+  }
+}
+
+function viewVal(v) {
+  if (v >= 1000000) return (v/1000000).toFixed(1)+'M';
+  if (v >= 1000) return Math.round(v/1000)+'k';
+  return v.toString();
+}
+
+function renderDleRow(s) {
+  const t = dleTarget;
+  const row = document.createElement('div');
+  row.className = 'dle-guess-row';
+
+  const nameCell = document.createElement('div');
+  nameCell.className = 'dle-name-cell';
+  nameCell.textContent = s.name;
+  row.appendChild(nameCell);
+
+  const catC = catScore(s.category, t.category);
+  const viewC = viewScore(s.views, t.views, s.yt, t.yt);
+  const platC = s.platform === t.platform ? 'correct' : 'wrong';
+  const ageC = numScore(s.age, t.age, 3);
+  const genC = s.gender === t.gender ? 'correct' : 'wrong';
+  const htC = numScore(s.height, t.height, 5);
+
+  const stats = [
+    { cls: catC, val: s.category, arrow: '' },
+    { cls: viewC.cls, val: viewVal(s.views > 0 ? s.views : s.yt), arrow: viewC.arrow },
+    { cls: platC, val: s.platform, arrow: '' },
+    { cls: ageC.cls, val: s.age, arrow: ageC.arrow },
+    { cls: genC, val: s.gender === 'M' ? 'Male' : 'Female', arrow: '' },
+    { cls: htC.cls, val: s.height + 'cm', arrow: htC.arrow },
+  ];
+
+  stats.forEach(st => {
+    const c = document.createElement('div');
+    c.className = 'dle-stat-cell ' + st.cls;
+    c.innerHTML = (st.arrow ? `<span class="arrow">${st.arrow}</span>` : '') + `<span>${st.val}</span>`;
+    row.appendChild(c);
+  });
+
+  document.getElementById('dle-rows').prepend(row);
+}
+
+function catScore(g, t) {
+  if (g === t) return 'correct';
+  const broad = { 'FPS': 'action', 'MMO/RPG': 'action', 'Variety': 'variety', 'IRL': 'irl', 'IRL/Politics': 'irl' };
+  return broad[g] === broad[t] ? 'close' : 'wrong';
+}
+
+function viewScore(gv, tv, gy, ty) {
+  const geff = gv > 0 ? gv : gy / 1000;
+  const teff = tv > 0 ? tv : ty / 1000;
+  if (Math.abs(geff - teff) / Math.max(teff, 1) < 0.2) return { cls: 'correct', arrow: '' };
+  if (Math.abs(geff - teff) / Math.max(teff, 1) < 0.6) return { cls: 'close', arrow: geff < teff ? '↑' : '↓' };
+  return { cls: 'wrong', arrow: geff < teff ? '↑' : '↓' };
+}
+
+function numScore(g, t, range) {
+  if (g === t) return { cls: 'correct', arrow: '' };
+  if (Math.abs(g - t) <= range) return { cls: 'close', arrow: g < t ? '↑' : '↓' };
+  return { cls: 'wrong', arrow: g < t ? '↑' : '↓' };
+}
+
+function endDle(won) {
+  document.getElementById('dle-input').disabled = true;
+  document.getElementById('dle-btn').disabled = true;
+  const win = document.getElementById('dle-win');
+  win.style.display = 'block';
+  if (won) {
+    win.innerHTML = `<div class="wt">NICE!</div><div style="font-size:13px;margin-top:4px;">You got <strong>${dleTarget.name}</strong> in ${dleGuesses.length} guess${dleGuesses.length>1?'es':''}!</div>`;
+    win.classList.add('show');
+  } else {
+    win.innerHTML = `<div class="wt" style="color:var(--red)">OUT!</div><div style="font-size:13px;margin-top:4px;">The streamer was <strong>${dleTarget.name}</strong>.</div>`;
+    win.classList.add('show', 'dle-lose-msg');
+  }
+  document.getElementById('dle-new-btn').style.display = 'block';
+}
+
+// ===== TABS =====
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i===0&&t==='doku')||(i===1&&t==='dle')));
+  document.getElementById('panel-doku').classList.toggle('active', t === 'doku');
+  document.getElementById('panel-dle').classList.toggle('active', t === 'dle');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dle-autocomplete') && !e.target.closest('.dle-input')) {
+    document.getElementById('dle-ac').className = 'dle-autocomplete';
+  }
+});
+
+initDoku();
+initDle();
+</script>
