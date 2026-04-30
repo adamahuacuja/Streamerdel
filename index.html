@@ -123,7 +123,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);fon
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('dle')">StreamerDle</button>
+  <button class="tab active" onclick="switchTab('dle')">StreamerDel</button>
   <button class="tab" onclick="switchTab('doku')">StreamerDoku</button>
 </div>
 
@@ -397,6 +397,8 @@ const S=[
   {n:"Nicki Taylor",p:"Twitch",cat:"IRL",f:620000,age:27,g:"F",h:170,c:"US",url:"https://twitch.tv/nickitaylor"},
   {n:"GeminiTay",p:"YouTube",cat:"Variety",f:1500000,age:28,g:"F",h:168,c:"CA",url:"https://youtube.com/@geminitay"},
   {n:"Wattles",p:"YouTube",cat:"Variety",f:1800000,age:27,g:"M",h:183,c:"US",url:"https://youtube.com/@wattles"},
+  {n:"Atrioc",p:"Twitch",cat:"veriety",f:450000,age:35,g:"M",h:170,c:"US",url:"https://twitch.tv/Atrioc"},
+  {n:"Sodapoppin",p:"Twitch",cat:"veriety",f:8000000,age:32,g:"M",h:170,c:"US",url:"https://twitch.tv/sodapoppin"},
 ];
 
 const STREAMERS=Object.values(S.reduce((a,s)=>{if(!a[s.n])a[s.n]=s;return a},{}));
