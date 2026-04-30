@@ -1,583 +1,664 @@
-
+<!DOCTYPE html>
+<html>
+<head>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --purple: #7F77DD;
-    --purple-dark: #3C3489;
-    --teal: #1D9E75;
-    --teal-dark: #0F6E56;
-    --coral: #D85A30;
-    --amber: #EF9F27;
-    --green: #3B6D11;
-    --green-light: #C0DD97;
-    --red: #E24B4A;
-    --yellow: #EF9F27;
-    --gray-light: #F1EFE8;
-    --border: var(--color-border-tertiary);
-    --bg: var(--color-background-primary);
-    --bg2: var(--color-background-secondary);
-    --bg3: var(--color-background-tertiary);
-    --text: var(--color-text-primary);
-    --muted: var(--color-text-secondary);
-  }
-
-  .hub { font-family: 'DM Sans', sans-serif; color: var(--text); padding: 0 0 2rem; }
-
-  .hub-header {
-    text-align: center;
-    padding: 1.5rem 1rem 1rem;
-    border-bottom: 0.5px solid var(--border);
-    margin-bottom: 1.5rem;
-  }
-  .hub-title { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; color: var(--purple); line-height: 1; }
-  .hub-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-
-  .game-tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem; padding: 0 1rem; }
-  .tab-btn {
-    padding: 8px 20px; border-radius: 999px; font-size: 13px; font-weight: 500;
-    border: 0.5px solid var(--border); background: var(--bg2); color: var(--muted);
-    cursor: pointer; transition: all 0.15s;
-  }
-  .tab-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
-
-  .game-panel { display: none; }
-  .game-panel.active { display: block; }
-
-  /* ========== STREAMERDOKU ========== */
-  .doku-wrap { padding: 0 1rem; }
-  .doku-info { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 1rem; }
-
-  .doku-grid-outer {
-    overflow-x: auto;
-    border: 2px solid var(--purple);
-    border-radius: var(--border-radius-lg);
-    background: var(--bg);
-  }
-
-  .doku-grid {
-    display: grid;
-    grid-template-columns: 90px repeat(3, 1fr);
-    grid-template-rows: auto repeat(3, 1fr);
-    min-width: 380px;
-  }
-
-  .doku-corner { background: var(--purple-dark); border-radius: 10px 0 0 0; }
-  .doku-col-header {
-    background: var(--purple);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 500;
-    text-align: center;
-    padding: 8px 4px;
-    border-left: 0.5px solid rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .doku-col-header:last-child { border-radius: 0 10px 0 0; }
-  .doku-row-header {
-    background: var(--purple);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 8px;
-    border-top: 0.5px solid rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    text-align: center;
-  }
-  .doku-row-header:last-child { border-radius: 0 0 0 10px; }
-
-  .doku-cell {
-    border-left: 0.5px solid var(--border);
-    border-top: 0.5px solid var(--border);
-    min-height: 80px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: background 0.1s;
-    position: relative;
-    padding: 4px;
-  }
-  .doku-cell:hover { background: var(--bg2); }
-  .doku-cell.filled { background: #EEEDFE; cursor: default; }
-  .doku-cell.filled:hover { background: #CECBF6; }
-  .doku-cell .cell-name { font-size: 11px; font-weight: 500; text-align: center; color: var(--purple-dark); line-height: 1.3; }
-  .doku-cell .cell-hint { font-size: 9px; color: #7F77DD; }
-  .doku-cell.wrong { background: #FCEBEB; animation: shake 0.3s; }
-  .doku-cell.wrong .cell-name { color: var(--red); }
-
-  @keyframes shake {
-    0%,100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
-  }
-
-  .doku-score-row { display: flex; justify-content: center; gap: 2rem; margin: 1rem 0 0.5rem; }
-  .doku-score-item { text-align: center; }
-  .doku-score-item .val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--purple); }
-  .doku-score-item .lbl { font-size: 11px; color: var(--muted); }
-
-  /* Modal */
-  .modal-overlay {
-    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); z-index: 100;
-    align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: var(--bg); border-radius: var(--border-radius-lg);
-    border: 0.5px solid var(--border); padding: 1.25rem; width: 320px; max-width: 90vw;
-  }
-  .modal-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
-  .modal-search { width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; background: var(--bg2); color: var(--text); margin-bottom: 8px; }
-  .modal-list { max-height: 200px; overflow-y: auto; }
-  .modal-item { padding: 8px 10px; font-size: 13px; cursor: pointer; border-radius: 6px; }
-  .modal-item:hover { background: var(--bg2); }
-  .modal-item .platform-tag { font-size: 10px; color: var(--muted); margin-left: 4px; }
-  .modal-btns { display: flex; gap: 8px; margin-top: 12px; }
-  .modal-btn { flex: 1; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; cursor: pointer; background: var(--bg2); color: var(--text); }
-  .modal-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
-
-  /* ========== STREAMERDLE ========== */
-  .dle-wrap { padding: 0 1rem; }
-  .dle-target-info { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 1rem; }
-
-  .dle-input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-  .dle-input { flex: 1; padding: 9px 12px; border: 0.5px solid var(--border); border-radius: var(--border-radius-md); font-size: 13px; background: var(--bg2); color: var(--text); }
-  .dle-guess-btn { padding: 9px 16px; background: var(--purple); color: #fff; border: none; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 500; cursor: pointer; }
-  .dle-guess-btn:disabled { opacity: 0.4; cursor: default; }
-
-  .dle-autocomplete { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--border-radius-md); overflow: hidden; margin-bottom: 8px; display: none; }
-  .dle-autocomplete.open { display: block; }
-  .dle-ac-item { padding: 8px 12px; font-size: 13px; cursor: pointer; }
-  .dle-ac-item:hover { background: var(--bg2); }
-
-  .dle-legend { display: flex; gap: 12px; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
-  .dle-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
-  .dle-legend-dot { width: 12px; height: 12px; border-radius: 3px; }
-
-  .dle-guess-header {
-    display: grid;
-    grid-template-columns: 90px repeat(6, 1fr);
-    gap: 3px;
-    margin-bottom: 4px;
-  }
-  .dle-gh-cell { font-size: 10px; color: var(--muted); text-align: center; font-weight: 500; padding: 2px; }
-
-  .dle-guess-row {
-    display: grid;
-    grid-template-columns: 90px repeat(6, 1fr);
-    gap: 3px;
-    margin-bottom: 3px;
-    animation: slideIn 0.2s ease;
-  }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-
-  .dle-name-cell {
-    background: var(--bg2); border-radius: 6px; padding: 6px 4px;
-    font-size: 11px; font-weight: 500; text-align: center;
-    border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center;
-  }
-  .dle-stat-cell {
-    border-radius: 6px; padding: 4px 2px; font-size: 10px; font-weight: 500;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 44px; text-align: center; line-height: 1.2;
-  }
-  .dle-stat-cell.correct { background: var(--teal); color: #fff; }
-  .dle-stat-cell.close { background: var(--amber); color: #fff; }
-  .dle-stat-cell.wrong { background: #B4B2A9; color: #fff; }
-  .dle-stat-cell .arrow { font-size: 14px; display: block; }
-
-  .dle-win-msg {
-    text-align: center; padding: 1rem;
-    background: #EAF3DE; border-radius: var(--border-radius-md);
-    border: 0.5px solid #97C459; margin-top: 0.5rem; display: none;
-  }
-  .dle-win-msg.show { display: block; }
-  .dle-win-msg .wt { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--green); }
-  .dle-lose-msg { background: #FCEBEB; border-color: #F09595; color: var(--red); }
-
-  .dle-new-btn { display: block; margin: 0.75rem auto 0; padding: 8px 20px; background: var(--bg2); color: var(--text); border: 0.5px solid var(--border); border-radius: 999px; font-size: 13px; cursor: pointer; }
-
-  .attempts-bar { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 0.5rem; }
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#7F77DD;--purple-dark:#3C3489;--purple-light:#EEEDFE;
+  --teal:#1D9E75;--amber:#EF9F27;--green:#3B6D11;--red:#E24B4A;
+  --bg:var(--color-background-primary);--bg2:var(--color-background-secondary);--bg3:var(--color-background-tertiary);
+  --text:var(--color-text-primary);--muted:var(--color-text-secondary);--border:var(--color-border-tertiary);
+  --radius:10px;--rsm:6px;
+}
+body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);font-size:14px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:0.5px solid var(--border)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--purple);letter-spacing:2px}
+.nav-right{display:flex;align-items:center;gap:8px}
+.auth-btn{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid var(--border);background:var(--bg2);color:var(--text)}
+.auth-btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.avatar-btn{width:30px;height:30px;border-radius:50%;background:var(--purple);color:#fff;font-size:13px;font-weight:500;border:none;cursor:pointer}
+.tabs,.mode-tabs{display:flex;gap:6px;justify-content:center;padding:10px 12px 0}
+.tab,.mode-tab{padding:7px 16px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer}
+.tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.mode-tab.active{background:var(--purple-dark);color:#fff;border-color:var(--purple-dark)}
+.daily-badge{background:var(--amber);color:#fff;font-size:9px;font-weight:600;padding:2px 5px;border-radius:999px;margin-left:3px}
+.panel{display:none;padding:12px}
+.panel.active{display:block}
+.stats-bar{display:flex;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:10px;max-width:520px;margin-left:auto;margin-right:auto}
+.stat-item{flex:1;text-align:center;border-right:0.5px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--purple)}
+.stat-lbl{font-size:9px;color:var(--muted);font-weight:500}
+.dle-wrap{max-width:740px;margin:0 auto}
+.daily-banner{background:var(--purple-light);border:0.5px solid var(--purple);border-radius:var(--rsm);padding:7px 12px;text-align:center;font-size:11px;color:var(--purple-dark);margin-bottom:8px;font-weight:500}
+.legend{display:flex;gap:10px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:2px}
+.input-row{display:flex;gap:6px;margin-bottom:6px}
+.dle-input{flex:1;padding:9px 12px;border:0.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--bg2);color:var(--text);outline:none}
+.dle-input:focus{border-color:var(--purple)}
+.guess-btn{padding:9px 16px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.guess-btn:disabled{opacity:0.4;cursor:default}
+.ac{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);display:none;max-height:180px;overflow-y:auto;margin-bottom:6px}
+.ac.open{display:block}
+.ac-item{padding:8px 12px;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.ac-item:hover{background:var(--bg2)}
+.ac-plat{font-size:9px;color:var(--muted);background:var(--bg3);padding:1px 5px;border-radius:999px}
+.pips{display:flex;gap:3px;justify-content:center;margin-bottom:8px}
+.pip{width:16px;height:7px;border-radius:999px;background:var(--border)}
+.pip.used{background:var(--amber)}.pip.ok{background:var(--teal)}.pip.out{background:var(--red)}
+/* 7 columns now: name + 6 stats + height = name + 7 */
+.gh{display:grid;grid-template-columns:95px repeat(7,1fr);gap:2px;margin-bottom:3px}
+.gh-cell{font-size:9px;color:var(--muted);text-align:center;font-weight:500;padding:2px}
+.gr{display:grid;grid-template-columns:95px repeat(7,1fr);gap:2px;margin-bottom:2px;animation:si .2s ease}
+@keyframes si{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.name-cell{background:var(--bg2);border-radius:var(--rsm);padding:5px 3px;font-size:10px;font-weight:500;text-align:center;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;line-height:1.2;min-height:42px}
+.sc{border-radius:var(--rsm);padding:3px 2px;font-size:9px;font-weight:500;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:42px;text-align:center;line-height:1.2}
+.sc.correct{background:var(--teal);color:#fff}
+.sc.close{background:var(--amber);color:#fff}
+.sc.wrong{background:#B4B2A9;color:#fff}
+.sc .arrow{font-size:11px;display:block}
+.result{border-radius:var(--radius);padding:12px;margin-top:8px;display:none;text-align:center}
+.result.show{display:block}
+.result.win{background:#EAF3DE;border:0.5px solid #97C459}
+.result.lose{background:#FCEBEB;border:0.5px solid #F09595}
+.result-title{font-family:'Bebas Neue',sans-serif;font-size:28px}
+.result-sub{font-size:12px;margin-top:3px}
+.result-link{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:7px 14px;background:var(--purple);color:#fff;border-radius:999px;font-size:11px;font-weight:500;text-decoration:none}
+.share-btn,.new-btn{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:7px 14px;background:var(--bg);color:var(--text);border:0.5px solid var(--border);border-radius:999px;font-size:11px;font-weight:500;cursor:pointer}
+.new-btn{display:block;margin:8px auto 0}
+.doku-wrap{max-width:560px;margin:0 auto}
+.doku-scores{display:flex;justify-content:center;gap:2rem;margin-bottom:10px}
+.ds-item .val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--purple)}
+.ds-item .lbl{font-size:9px;color:var(--muted);font-weight:500}
+.doku-grid-outer{overflow-x:auto;border:2px solid var(--purple);border-radius:var(--radius)}
+.doku-grid{display:grid;grid-template-columns:90px repeat(3,1fr);grid-template-rows:auto repeat(3,1fr);min-width:340px}
+.doku-corner{background:var(--purple-dark);border-radius:8px 0 0 0}
+.doku-col-hd{background:var(--purple);color:#fff;font-size:10px;font-weight:500;text-align:center;padding:8px 3px;border-left:0.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.doku-col-hd:last-child{border-radius:0 8px 0 0}
+.doku-row-hd{background:var(--purple);color:#fff;font-size:9px;font-weight:500;padding:6px;border-top:0.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;text-align:center}
+.doku-row-hd:last-child{border-radius:0 0 0 8px}
+.doku-cell{border-left:0.5px solid var(--border);border-top:0.5px solid var(--border);min-height:75px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:2px;padding:4px}
+.doku-cell:hover{background:var(--bg2)}
+.doku-cell.filled{background:var(--purple-light);cursor:default}
+.doku-cell.filled:hover{background:#D9D7F8}
+.cell-name{font-size:10px;font-weight:500;text-align:center;color:var(--purple-dark);line-height:1.3}
+.cell-link{font-size:8px;color:var(--purple);text-decoration:underline}
+.doku-cell.wrong{background:#FCEBEB;animation:shk .3s}
+.doku-cell.wrong .cell-name{color:var(--red)}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.mb{background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border);padding:16px;width:320px;max-width:92vw}
+.mb-title{font-size:14px;font-weight:500;margin-bottom:2px}
+.mb-sub{font-size:11px;color:var(--muted);margin-bottom:10px}
+.mb-search{width:100%;padding:8px 10px;border:0.5px solid var(--border);border-radius:var(--rsm);font-size:12px;background:var(--bg2);color:var(--text);outline:none;margin-bottom:6px}
+.mb-search:focus{border-color:var(--purple)}
+.mb-list{max-height:200px;overflow-y:auto}
+.mb-item{padding:8px;font-size:12px;cursor:pointer;border-radius:var(--rsm);display:flex;justify-content:space-between;align-items:center}
+.mb-item:hover{background:var(--bg2)}
+.pt{font-size:9px;color:var(--muted);background:var(--bg3);padding:1px 5px;border-radius:999px}
+.mb-btns{display:flex;gap:6px;margin-top:10px}
+.mb-btn{flex:1;padding:8px;border:0.5px solid var(--border);border-radius:var(--rsm);font-size:12px;cursor:pointer;background:var(--bg2);color:var(--text);font-weight:500}
+.auth-box{background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border);padding:22px;width:340px;max-width:92vw;text-align:center}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--purple);margin-bottom:3px}
+.auth-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.auth-feats{display:flex;flex-direction:column;gap:7px;margin:12px 0;text-align:left}
+.auth-feat{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.g-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:8px}
+.g-btn:hover{background:var(--bg2)}
+.guest-link{font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;border:none;background:none;padding:3px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 18px;border-radius:999px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
 </style>
+</head>
+<body>
 
-<div class="hub">
-  <div class="hub-header">
-    <div class="hub-title">STREAMERDLE</div>
-    <div class="hub-sub">Two games · One streamer universe</div>
-  </div>
-
-  <div class="game-tabs">
-    <button class="tab-btn active" onclick="switchTab('doku')">StreamerDoku</button>
-    <button class="tab-btn" onclick="switchTab('dle')">StreamerDle</button>
-  </div>
-
-  <!-- STREAMERDOKU -->
-  <div class="game-panel active" id="panel-doku">
-    <div class="doku-wrap">
-      <div class="doku-score-row">
-        <div class="doku-score-item"><div class="val" id="doku-filled">0</div><div class="lbl">Filled</div></div>
-        <div class="doku-score-item"><div class="val" id="doku-remain">9</div><div class="lbl">Remaining</div></div>
-        <div class="doku-score-item"><div class="val" id="doku-guesses">0</div><div class="lbl">Guesses</div></div>
-      </div>
-      <div class="doku-info">Find a streamer that fits BOTH the row and column criteria</div>
-      <div class="doku-grid-outer">
-        <div class="doku-grid" id="doku-grid"></div>
-      </div>
-      <div style="text-align:center;margin-top:0.75rem;">
-        <button class="dle-new-btn" onclick="initDoku()">New Puzzle</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STREAMERDLE -->
-  <div class="game-panel" id="panel-dle">
-    <div class="dle-wrap">
-      <div class="dle-target-info">Guess today's mystery streamer! You have 8 attempts.</div>
-
-      <div class="dle-legend">
-        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:var(--teal)"></div>Correct</div>
-        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:var(--amber)"></div>Close</div>
-        <div class="dle-legend-item"><div class="dle-legend-dot" style="background:#B4B2A9"></div>Wrong</div>
-      </div>
-
-      <div style="position:relative;">
-        <div class="dle-input-row">
-          <input class="dle-input" id="dle-input" type="text" placeholder="Type a streamer name..." autocomplete="off" oninput="dleAutocomplete()" onkeydown="if(event.key==='Enter')dleGuess()">
-          <button class="dle-guess-btn" id="dle-btn" onclick="dleGuess()">Guess</button>
-        </div>
-        <div class="dle-autocomplete" id="dle-ac"></div>
-      </div>
-
-      <div class="dle-guess-header" id="dle-header">
-        <div class="dle-gh-cell"></div>
-        <div class="dle-gh-cell">Category</div>
-        <div class="dle-gh-cell">Views</div>
-        <div class="dle-gh-cell">Platform</div>
-        <div class="dle-gh-cell">Age</div>
-        <div class="dle-gh-cell">Gender</div>
-        <div class="dle-gh-cell">Height</div>
-      </div>
-
-      <div id="dle-rows"></div>
-
-      <div class="dle-win-msg" id="dle-win"></div>
-      <button class="dle-new-btn" id="dle-new-btn" style="display:none" onclick="initDle()">New Streamer</button>
-    </div>
+<div class="nav">
+  <div class="logo">STREAMERDLE</div>
+  <div class="nav-right" id="auth-area">
+    <button class="auth-btn primary" onclick="openAuth()">Sign In</button>
   </div>
 </div>
 
-<!-- DOKU MODAL (faux viewport) -->
-<div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);display:none;" id="doku-modal-overlay">
-  <div class="modal-box" id="doku-modal">
-    <div class="modal-title" id="modal-title">Who fits this cell?</div>
-    <div class="modal-sub" id="modal-sub"></div>
-    <input class="modal-search" id="modal-search" type="text" placeholder="Search streamer..." oninput="filterModalList()" autocomplete="off">
-    <div class="modal-list" id="modal-list"></div>
-    <div class="modal-btns">
-      <button class="modal-btn" onclick="closeModal()">Cancel</button>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dle')">StreamerDle</button>
+  <button class="tab" onclick="switchTab('doku')">StreamerDoku</button>
+</div>
+
+<div class="panel active" id="panel-dle">
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="md-daily" onclick="setMode('daily')">Daily <span class="daily-badge">NEW</span></button>
+    <button class="mode-tab" id="md-free" onclick="setMode('free')">Free Play</button>
+  </div>
+  <div class="dle-wrap" style="margin-top:10px">
+    <div id="daily-banner" class="daily-banner">Daily #<span id="day-num">1</span> — Answer resets at midnight UTC</div>
+    <div id="stats-bar" style="display:none">
+      <div class="stats-bar">
+        <div class="stat-item"><div class="stat-val" id="sp">0</div><div class="stat-lbl">Played</div></div>
+        <div class="stat-item"><div class="stat-val" id="sw">0</div><div class="stat-lbl">Wins</div></div>
+        <div class="stat-item"><div class="stat-val" id="ss">0</div><div class="stat-lbl">Streak</div></div>
+        <div class="stat-item"><div class="stat-val" id="sb">-</div><div class="stat-lbl">Best</div></div>
+      </div>
     </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>Correct</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Close</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#B4B2A9"></div>Wrong</div>
+    </div>
+    <div style="position:relative">
+      <div class="input-row">
+        <input class="dle-input" id="dle-in" type="text" placeholder="Type a streamer name..." autocomplete="off" oninput="dleFill()" onkeydown="if(event.key==='Enter')dleGuess()">
+        <button class="guess-btn" id="dle-btn" onclick="dleGuess()">Guess</button>
+      </div>
+      <div class="ac" id="dle-ac"></div>
+    </div>
+    <div class="pips" id="pips"></div>
+    <div class="gh">
+      <div class="gh-cell"></div>
+      <div class="gh-cell">Category</div>
+      <div class="gh-cell">Followers</div>
+      <div class="gh-cell">Platform</div>
+      <div class="gh-cell">Age</div>
+      <div class="gh-cell">Gender</div>
+      <div class="gh-cell">Height</div>
+      <div class="gh-cell">Origin</div>
+    </div>
+    <div id="dle-rows"></div>
+    <div class="result" id="dle-result"></div>
+    <button class="new-btn" id="dle-new" style="display:none" onclick="initDle()">New Streamer</button>
   </div>
 </div>
+
+<div class="panel" id="panel-doku">
+  <div class="doku-wrap">
+    <div class="doku-scores">
+      <div class="ds-item"><div class="val" id="df">0</div><div class="lbl">Filled</div></div>
+      <div class="ds-item"><div class="val" id="dr">9</div><div class="lbl">Left</div></div>
+      <div class="ds-item"><div class="val" id="dg">0</div><div class="lbl">Guesses</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px">Find a streamer matching BOTH the row and column</div>
+    <div class="doku-grid-outer"><div class="doku-grid" id="doku-grid"></div></div>
+    <div style="text-align:center;margin-top:8px"><button class="new-btn" onclick="initDoku()">New Puzzle</button></div>
+  </div>
+</div>
+
+<div class="mo" id="auth-mo">
+  <div class="auth-box">
+    <div class="auth-logo">STREAMERDLE</div>
+    <div class="auth-sub">Sign in to track your stats and streaks</div>
+    <div class="auth-feats">
+      <div class="auth-feat">📊 Track wins, losses and streaks</div>
+      <div class="auth-feat">📅 Daily puzzle history saved</div>
+      <div class="auth-feat">📋 Share results with friends</div>
+    </div>
+    <button class="g-btn" onclick="googleSignIn()">
+      <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <button class="guest-link" onclick="closeAuth()">Continue as guest</button>
+  </div>
+</div>
+
+<div class="mo" id="doku-mo">
+  <div class="mb">
+    <div class="mb-title" id="mo-title">Who fits?</div>
+    <div class="mb-sub" id="mo-sub"></div>
+    <input class="mb-search" id="mo-search" type="text" placeholder="Search streamers..." oninput="filterList()" autocomplete="off">
+    <div class="mb-list" id="mo-list"></div>
+    <div class="mb-btns"><button class="mb-btn" onclick="closeDokuModal()">Cancel</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const STREAMERS = [
-  { name: "Ninja",        platform: "Twitch",  category: "FPS",       views: 60000,  yt: 24000000, age: 33, gender: "M", height: 183 },
-  { name: "xQc",          platform: "Kick",    category: "Variety",   views: 80000,  yt: 2200000,  age: 28, gender: "M", height: 185 },
-  { name: "Pokimane",     platform: "Twitch",  category: "Variety",   views: 20000,  yt: 7000000,  age: 28, gender: "F", height: 165 },
-  { name: "Shroud",       platform: "Twitch",  category: "FPS",       views: 30000,  yt: 7800000,  age: 30, gender: "M", height: 180 },
-  { name: "Valkyrae",     platform: "YouTube", category: "Variety",   views: 15000,  yt: 4000000,  age: 30, gender: "F", height: 168 },
-  { name: "HasanAbi",     platform: "Twitch",  category: "IRL/Politics", views: 25000, yt: 1200000, age: 32, gender: "M", height: 193 },
-  { name: "Sykkuno",      platform: "YouTube", category: "Variety",   views: 8000,   yt: 3000000,  age: 31, gender: "M", height: 178 },
-  { name: "Ludwig",       platform: "YouTube", category: "Variety",   views: 12000,  yt: 4500000,  age: 27, gender: "M", height: 180 },
-  { name: "Mizkif",       platform: "Twitch",  category: "IRL",       views: 15000,  yt: 600000,   age: 28, gender: "M", height: 178 },
-  { name: "NICKMERCS",    platform: "Twitch",  category: "FPS",       views: 35000,  yt: 6500000,  age: 34, gender: "M", height: 178 },
-  { name: "TimTheTatman", platform: "YouTube", category: "Variety",   views: 18000,  yt: 4000000,  age: 34, gender: "M", height: 188 },
-  { name: "Amouranth",    platform: "Twitch",  category: "IRL",       views: 12000,  yt: 1200000,  age: 30, gender: "F", height: 165 },
-  { name: "AdinRoss",     platform: "Kick",    category: "IRL",       views: 40000,  yt: 3000000,  age: 23, gender: "M", height: 178 },
-  { name: "Lacy",         platform: "Twitch",  category: "Variety",   views: 1200,   yt: 750000,   age: 21, gender: "F", height: 163 },
-  { name: "Kai Cenat",    platform: "Twitch",  category: "Variety",   views: 100000, yt: 6000000,  age: 22, gender: "M", height: 168 },
-  { name: "IShowSpeed",   platform: "YouTube", category: "Variety",   views: 0,      yt: 22000000, age: 19, gender: "M", height: 178 },
-  { name: "Jynxzi",       platform: "Twitch",  category: "FPS",       views: 40000,  yt: 2000000,  age: 20, gender: "M", height: 185 },
-  { name: "BobbyPoff",    platform: "Twitch",  category: "Variety",   views: 600,    yt: 700000,   age: 25, gender: "M", height: 183 },
-  { name: "LosPollosTV",  platform: "Kick",    category: "IRL",       views: 8000,   yt: 800000,   age: 31, gender: "M", height: 180 },
-  { name: "Clix",         platform: "Twitch",  category: "FPS",       views: 20000,  yt: 2500000,  age: 18, gender: "M", height: 175 },
-  { name: "Moistcr1tikal",platform: "Twitch",  category: "Variety",   views: 30000,  yt: 16000000, age: 28, gender: "M", height: 188 },
-  { name: "Asmongold",    platform: "Twitch",  category: "MMO/RPG",   views: 25000,  yt: 2100000,  age: 34, gender: "M", height: 183 },
-  { name: "Lirik",        platform: "Twitch",  category: "Variety",   views: 8000,   yt: 400000,   age: 34, gender: "M", height: 185 },
-  { name: "CourageJD",    platform: "YouTube", category: "Variety",   views: 5000,   yt: 3200000,  age: 30, gender: "M", height: 183 },
-  { name: "Alinity",      platform: "Twitch",  category: "Variety",   views: 5000,   yt: 300000,   age: 34, gender: "F", height: 168 },
-  { name: "Saqib",        platform: "Twitch",  category: "FPS",       views: 3000,   yt: 650000,   age: 26, gender: "M", height: 178 },
-  { name: "Quinn",        platform: "YouTube", category: "Variety",   views: 2500,   yt: 780000,   age: 23, gender: "F", height: 165 },
-  { name: "Nicki Taylor", platform: "Twitch",  category: "IRL",       views: 800,    yt: 620000,   age: 27, gender: "F", height: 170 },
+const S=[
+  {n:"Ninja",p:"Twitch",cat:"FPS",f:19000000,age:33,g:"M",h:183,c:"US",url:"https://twitch.tv/ninja"},
+  {n:"xQc",p:"Kick",cat:"Variety",f:12000000,age:28,g:"M",h:185,c:"CA",url:"https://kick.com/xqc"},
+  {n:"Pokimane",p:"Twitch",cat:"Variety",f:9300000,age:28,g:"F",h:165,c:"CA",url:"https://twitch.tv/pokimane"},
+  {n:"Shroud",p:"Twitch",cat:"FPS",f:10600000,age:30,g:"M",h:180,c:"CA",url:"https://twitch.tv/shroud"},
+  {n:"Valkyrae",p:"YouTube",cat:"Variety",f:4000000,age:30,g:"F",h:168,c:"US",url:"https://youtube.com/@valkyrae"},
+  {n:"HasanAbi",p:"Twitch",cat:"IRL",f:2600000,age:32,g:"M",h:193,c:"US",url:"https://twitch.tv/hasanabi"},
+  {n:"Sykkuno",p:"YouTube",cat:"Variety",f:3000000,age:31,g:"M",h:178,c:"US",url:"https://youtube.com/@sykkuno"},
+  {n:"Ludwig",p:"YouTube",cat:"Variety",f:4500000,age:27,g:"M",h:180,c:"US",url:"https://youtube.com/@ludwig"},
+  {n:"Mizkif",p:"Twitch",cat:"IRL",f:1900000,age:28,g:"M",h:178,c:"US",url:"https://twitch.tv/mizkif"},
+  {n:"NICKMERCS",p:"Twitch",cat:"FPS",f:7000000,age:34,g:"M",h:178,c:"US",url:"https://twitch.tv/nickmercs"},
+  {n:"TimTheTatman",p:"YouTube",cat:"Variety",f:4000000,age:34,g:"M",h:188,c:"US",url:"https://youtube.com/@timthetatman"},
+  {n:"Amouranth",p:"Twitch",cat:"IRL",f:6400000,age:30,g:"F",h:165,c:"US",url:"https://twitch.tv/amouranth"},
+  {n:"AdinRoss",p:"Kick",cat:"IRL",f:7500000,age:23,g:"M",h:178,c:"US",url:"https://kick.com/adinross"},
+  {n:"Kai Cenat",p:"Twitch",cat:"Variety",f:9000000,age:22,g:"M",h:168,c:"US",url:"https://twitch.tv/kaicenat"},
+  {n:"IShowSpeed",p:"YouTube",cat:"Variety",f:22000000,age:19,g:"M",h:178,c:"US",url:"https://youtube.com/@ishowspeed"},
+  {n:"Jynxzi",p:"Twitch",cat:"FPS",f:4500000,age:20,g:"M",h:185,c:"US",url:"https://twitch.tv/jynxzi"},
+  {n:"Moistcr1tikal",p:"Twitch",cat:"Variety",f:4500000,age:28,g:"M",h:188,c:"US",url:"https://twitch.tv/moistcr1tikal"},
+  {n:"Asmongold",p:"Twitch",cat:"MMO/RPG",f:3600000,age:34,g:"M",h:183,c:"US",url:"https://twitch.tv/asmongold"},
+  {n:"Lirik",p:"Twitch",cat:"Variety",f:2900000,age:34,g:"M",h:185,c:"US",url:"https://twitch.tv/lirik"},
+  {n:"CourageJD",p:"YouTube",cat:"Variety",f:3200000,age:30,g:"M",h:183,c:"US",url:"https://youtube.com/@couragejd"},
+  {n:"Alinity",p:"Twitch",cat:"Variety",f:1400000,age:34,g:"F",h:168,c:"CO",url:"https://twitch.tv/alinity"},
+  {n:"Clix",p:"Twitch",cat:"FPS",f:3200000,age:18,g:"M",h:175,c:"US",url:"https://twitch.tv/clix"},
+  {n:"DrLupo",p:"YouTube",cat:"FPS",f:4500000,age:35,g:"M",h:183,c:"US",url:"https://youtube.com/@drlupo"},
+  {n:"DrDisrespect",p:"YouTube",cat:"FPS",f:4400000,age:41,g:"M",h:203,c:"US",url:"https://youtube.com/@drdisrespect"},
+  {n:"summit1g",p:"Twitch",cat:"Variety",f:6000000,age:35,g:"M",h:180,c:"US",url:"https://twitch.tv/summit1g"},
+  {n:"sodapoppin",p:"Twitch",cat:"Variety",f:3600000,age:30,g:"M",h:175,c:"US",url:"https://twitch.tv/sodapoppin"},
+  {n:"Tfue",p:"Twitch",cat:"FPS",f:11000000,age:26,g:"M",h:188,c:"US",url:"https://twitch.tv/tfue"},
+  {n:"Myth",p:"Twitch",cat:"FPS",f:7000000,age:25,g:"M",h:188,c:"US",url:"https://twitch.tv/myth"},
+  {n:"SSSniperwolf",p:"YouTube",cat:"Variety",f:34000000,age:31,g:"F",h:163,c:"UK",url:"https://youtube.com/@sssniperwolf"},
+  {n:"Disguised Toast",p:"YouTube",cat:"Variety",f:2200000,age:30,g:"M",h:180,c:"CA",url:"https://youtube.com/@disguisedtoast"},
+  {n:"Corpse Husband",p:"YouTube",cat:"Variety",f:8500000,age:26,g:"M",h:188,c:"US",url:"https://youtube.com/@corpse_husband"},
+  {n:"Loeya",p:"Twitch",cat:"Variety",f:750000,age:28,g:"F",h:170,c:"SE",url:"https://twitch.tv/loeya"},
+  {n:"Michael Reeves",p:"YouTube",cat:"Tech",f:7500000,age:25,g:"M",h:163,c:"PH",url:"https://youtube.com/@michaelreeves"},
+  {n:"Fuslie",p:"Twitch",cat:"Variety",f:900000,age:29,g:"F",h:163,c:"US",url:"https://twitch.tv/fuslie"},
+  {n:"Hafu",p:"Twitch",cat:"MMO/RPG",f:1000000,age:33,g:"F",h:160,c:"US",url:"https://twitch.tv/hafu"},
+  {n:"Dunkey",p:"YouTube",cat:"Variety",f:7700000,age:33,g:"M",h:183,c:"US",url:"https://youtube.com/@dunkey"},
+  {n:"Markiplier",p:"YouTube",cat:"Horror",f:35000000,age:34,g:"M",h:178,c:"US",url:"https://youtube.com/@markiplier"},
+  {n:"Jacksepticeye",p:"YouTube",cat:"Variety",f:31000000,age:34,g:"M",h:185,c:"IE",url:"https://youtube.com/@jacksepticeye"},
+  {n:"PewDiePie",p:"YouTube",cat:"Variety",f:111000000,age:34,g:"M",h:175,c:"SE",url:"https://youtube.com/@pewdiepie"},
+  {n:"MrBeast",p:"YouTube",cat:"Variety",f:300000000,age:26,g:"M",h:188,c:"US",url:"https://youtube.com/@mrbeast"},
+  {n:"Lazarbeam",p:"YouTube",cat:"FPS",f:21000000,age:28,g:"M",h:193,c:"AU",url:"https://youtube.com/@lazarbeam"},
+  {n:"Fresh",p:"YouTube",cat:"FPS",f:9000000,age:24,g:"M",h:193,c:"AU",url:"https://youtube.com/@fresh"},
+  {n:"Muselk",p:"YouTube",cat:"FPS",f:9400000,age:28,g:"M",h:196,c:"AU",url:"https://youtube.com/@muselk"},
+  {n:"Loserfruit",p:"Twitch",cat:"Variety",f:1100000,age:28,g:"F",h:170,c:"AU",url:"https://twitch.tv/loserfruit"},
+  {n:"Typical Gamer",p:"YouTube",cat:"FPS",f:14000000,age:31,g:"M",h:183,c:"CA",url:"https://youtube.com/@typicalgamer"},
+  {n:"Ali-A",p:"YouTube",cat:"FPS",f:18000000,age:29,g:"M",h:178,c:"UK",url:"https://youtube.com/@alia"},
+  {n:"KSI",p:"YouTube",cat:"Variety",f:24000000,age:30,g:"M",h:183,c:"UK",url:"https://youtube.com/@ksi"},
+  {n:"Miniminter",p:"YouTube",cat:"Variety",f:10000000,age:30,g:"M",h:180,c:"UK",url:"https://youtube.com/@miniminter"},
+  {n:"Nadeshot",p:"Twitch",cat:"FPS",f:3500000,age:31,g:"M",h:180,c:"US",url:"https://twitch.tv/nadeshot"},
+  {n:"FaZe Rug",p:"YouTube",cat:"Variety",f:21000000,age:26,g:"M",h:170,c:"US",url:"https://youtube.com/@fazerug"},
+  {n:"JiDion",p:"Twitch",cat:"IRL",f:3200000,age:22,g:"M",h:188,c:"US",url:"https://twitch.tv/jidion"},
+  {n:"N3on",p:"Kick",cat:"IRL",f:2000000,age:20,g:"M",h:178,c:"US",url:"https://kick.com/n3on"},
+  {n:"Sketch",p:"Twitch",cat:"Variety",f:2500000,age:24,g:"M",h:183,c:"US",url:"https://twitch.tv/sketch"},
+  {n:"Emiru",p:"Twitch",cat:"Variety",f:1800000,age:24,g:"F",h:165,c:"US",url:"https://twitch.tv/emiru"},
+  {n:"Ironmouse",p:"Twitch",cat:"VTuber",f:1500000,age:29,g:"F",h:155,c:"US",url:"https://twitch.tv/ironmouse"},
+  {n:"Veibae",p:"Twitch",cat:"VTuber",f:1000000,age:27,g:"F",h:165,c:"UK",url:"https://twitch.tv/veibae"},
+  {n:"Nyanners",p:"Twitch",cat:"VTuber",f:1200000,age:29,g:"F",h:160,c:"US",url:"https://twitch.tv/nyanners"},
+  {n:"Gawr Gura",p:"YouTube",cat:"VTuber",f:4400000,age:25,g:"F",h:150,c:"US",url:"https://youtube.com/@gawrgura"},
+  {n:"Moonmoon",p:"Twitch",cat:"Variety",f:900000,age:33,g:"M",h:185,c:"CA",url:"https://twitch.tv/moonmoon"},
+  {n:"Forsen",p:"Twitch",cat:"Variety",f:1700000,age:34,g:"M",h:183,c:"SE",url:"https://twitch.tv/forsen"},
+  {n:"Destiny",p:"Kick",cat:"IRL",f:1200000,age:34,g:"M",h:170,c:"US",url:"https://kick.com/destiny"},
+  {n:"Northernlion",p:"Twitch",cat:"Variety",f:2100000,age:34,g:"M",h:183,c:"CA",url:"https://twitch.tv/northernlion"},
+  {n:"Tyler1",p:"Twitch",cat:"MMO/RPG",f:5300000,age:29,g:"M",h:160,c:"US",url:"https://twitch.tv/loltyler1"},
+  {n:"Doublelift",p:"Twitch",cat:"Esports",f:1600000,age:29,g:"M",h:175,c:"US",url:"https://twitch.tv/doublelift"},
+  {n:"Imaqtpie",p:"Twitch",cat:"MMO/RPG",f:2500000,age:30,g:"M",h:185,c:"US",url:"https://twitch.tv/imaqtpie"},
+  {n:"Nightblue3",p:"Twitch",cat:"MMO/RPG",f:2700000,age:29,g:"M",h:180,c:"US",url:"https://twitch.tv/nightblue3"},
+  {n:"Yassuo",p:"Twitch",cat:"MMO/RPG",f:1700000,age:24,g:"M",h:178,c:"EG",url:"https://twitch.tv/yassuo"},
+  {n:"BoxBox",p:"Twitch",cat:"MMO/RPG",f:1400000,age:27,g:"M",h:175,c:"US",url:"https://twitch.tv/boxbox"},
+  {n:"Kripparian",p:"Twitch",cat:"MMO/RPG",f:1500000,age:35,g:"M",h:178,c:"CA",url:"https://twitch.tv/nl_kripp"},
+  {n:"CohhCarnage",p:"Twitch",cat:"MMO/RPG",f:1700000,age:39,g:"M",h:183,c:"US",url:"https://twitch.tv/cohhcarnage"},
+  {n:"Vinesauce",p:"Twitch",cat:"Variety",f:1300000,age:35,g:"M",h:183,c:"US",url:"https://twitch.tv/vinesauce"},
+  {n:"TommyInnit",p:"YouTube",cat:"Variety",f:14000000,age:20,g:"M",h:175,c:"UK",url:"https://youtube.com/@tommyinnit"},
+  {n:"Dream",p:"YouTube",cat:"Variety",f:31000000,age:24,g:"M",h:185,c:"US",url:"https://youtube.com/@dream"},
+  {n:"GeorgeNotFound",p:"YouTube",cat:"Variety",f:11000000,age:24,g:"M",h:178,c:"UK",url:"https://youtube.com/@georgenotfound"},
+  {n:"Sapnap",p:"Twitch",cat:"Variety",f:3600000,age:22,g:"M",h:178,c:"US",url:"https://twitch.tv/sapnap"},
+  {n:"BadBoyHalo",p:"YouTube",cat:"Variety",f:5000000,age:27,g:"M",h:173,c:"CA",url:"https://youtube.com/@badboyhalo"},
+  {n:"Technoblade",p:"YouTube",cat:"Variety",f:15000000,age:23,g:"M",h:180,c:"US",url:"https://youtube.com/@technoblade"},
+  {n:"Ph1LzA",p:"Twitch",cat:"Variety",f:3700000,age:29,g:"M",h:185,c:"UK",url:"https://twitch.tv/ph1lza"},
+  {n:"WilburSoot",p:"Twitch",cat:"Variety",f:2700000,age:24,g:"M",h:183,c:"UK",url:"https://twitch.tv/wilbursoot"},
+  {n:"Quackity",p:"Twitch",cat:"Variety",f:5200000,age:23,g:"M",h:175,c:"MX",url:"https://twitch.tv/quackity"},
+  {n:"Ranboo",p:"Twitch",cat:"Variety",f:4100000,age:20,g:"M",h:196,c:"US",url:"https://twitch.tv/ranboo"},
+  {n:"Tubbo",p:"Twitch",cat:"Variety",f:2700000,age:20,g:"M",h:170,c:"UK",url:"https://twitch.tv/tubbo"},
+  {n:"Jschlatt",p:"YouTube",cat:"Variety",f:4000000,age:24,g:"M",h:180,c:"US",url:"https://youtube.com/@jschlatt"},
+  {n:"Skeppy",p:"YouTube",cat:"Variety",f:5000000,age:22,g:"M",h:178,c:"US",url:"https://youtube.com/@skeppy"},
+  {n:"DanTDM",p:"YouTube",cat:"Variety",f:26000000,age:31,g:"M",h:175,c:"UK",url:"https://youtube.com/@dantdm"},
+  {n:"Grian",p:"YouTube",cat:"Variety",f:8500000,age:27,g:"M",h:175,c:"UK",url:"https://youtube.com/@grian"},
+  {n:"Mumbo Jumbo",p:"YouTube",cat:"Variety",f:8000000,age:28,g:"M",h:188,c:"UK",url:"https://youtube.com/@mumbojumbo"},
+  {n:"LDShadowLady",p:"YouTube",cat:"Variety",f:7000000,age:29,g:"F",h:165,c:"UK",url:"https://youtube.com/@ldshadowlady"},
+  {n:"CaptainSparklez",p:"YouTube",cat:"Variety",f:12000000,age:31,g:"M",h:178,c:"US",url:"https://youtube.com/@captainsparklez"},
+  {n:"SmallishBeans",p:"YouTube",cat:"Variety",f:4500000,age:26,g:"M",h:185,c:"UK",url:"https://youtube.com/@smallishbeans"},
+  {n:"Stampy Cat",p:"YouTube",cat:"Variety",f:10000000,age:31,g:"M",h:178,c:"UK",url:"https://youtube.com/@stampylonghead"},
+  {n:"SSundee",p:"YouTube",cat:"Variety",f:21000000,age:34,g:"M",h:183,c:"US",url:"https://youtube.com/@ssundee"},
+  {n:"PopularMMOs",p:"YouTube",cat:"Variety",f:18000000,age:33,g:"M",h:183,c:"US",url:"https://youtube.com/@popularmmos"},
+  {n:"Ibai",p:"Twitch",cat:"Variety",f:12000000,age:28,g:"M",h:183,c:"ES",url:"https://twitch.tv/ibai"},
+  {n:"Rubius",p:"Twitch",cat:"Variety",f:14000000,age:32,g:"M",h:183,c:"ES",url:"https://twitch.tv/elrubius"},
+  {n:"TheGrefg",p:"Twitch",cat:"FPS",f:10000000,age:28,g:"M",h:180,c:"ES",url:"https://twitch.tv/thegrefg"},
+  {n:"Auron",p:"Twitch",cat:"Variety",f:7000000,age:32,g:"M",h:178,c:"ES",url:"https://twitch.tv/auronplay"},
+  {n:"Squeezie",p:"YouTube",cat:"Variety",f:17000000,age:27,g:"M",h:175,c:"FR",url:"https://youtube.com/@squeezie"},
+  {n:"Spreen",p:"Twitch",cat:"Variety",f:3500000,age:22,g:"M",h:178,c:"AR",url:"https://twitch.tv/spreen"},
+  {n:"Papaplatte",p:"Twitch",cat:"Variety",f:1400000,age:27,g:"M",h:185,c:"DE",url:"https://twitch.tv/papaplatte"},
+  {n:"HandOfBlood",p:"YouTube",cat:"Variety",f:3000000,age:31,g:"M",h:183,c:"DE",url:"https://youtube.com/@handofblood"},
+  {n:"Knossi",p:"Twitch",cat:"Variety",f:2000000,age:36,g:"M",h:175,c:"DE",url:"https://twitch.tv/knossi"},
+  {n:"Montana Black",p:"YouTube",cat:"Variety",f:4000000,age:33,g:"M",h:178,c:"DE",url:"https://youtube.com/@montanablack"},
+  {n:"SypherPK",p:"Twitch",cat:"FPS",f:5400000,age:27,g:"M",h:178,c:"US",url:"https://twitch.tv/sypherpk"},
+  {n:"Lachlan",p:"YouTube",cat:"FPS",f:14000000,age:26,g:"M",h:183,c:"AU",url:"https://youtube.com/@lachlan"},
+  {n:"Bugha",p:"Twitch",cat:"FPS",f:3200000,age:21,g:"M",h:178,c:"US",url:"https://twitch.tv/bugha"},
+  {n:"Benjyfishy",p:"Twitch",cat:"FPS",f:2200000,age:20,g:"M",h:175,c:"UK",url:"https://twitch.tv/benjyfishy"},
+  {n:"MrSavage",p:"Twitch",cat:"FPS",f:2800000,age:20,g:"M",h:178,c:"NO",url:"https://twitch.tv/mrsavage"},
+  {n:"Mongraal",p:"Twitch",cat:"FPS",f:3400000,age:19,g:"M",h:175,c:"UK",url:"https://twitch.tv/mongraal"},
+  {n:"Ghost Aydan",p:"Twitch",cat:"FPS",f:2000000,age:23,g:"M",h:180,c:"US",url:"https://twitch.tv/aydan"},
+  {n:"TenZ",p:"Twitch",cat:"FPS",f:2800000,age:22,g:"M",h:175,c:"CA",url:"https://twitch.tv/tenz"},
+  {n:"ImperialHal",p:"Twitch",cat:"FPS",f:2000000,age:24,g:"M",h:175,c:"US",url:"https://twitch.tv/imperialhal"},
+  {n:"Aceu",p:"Twitch",cat:"FPS",f:1800000,age:24,g:"M",h:183,c:"US",url:"https://twitch.tv/aceu"},
+  {n:"Dizzy",p:"Twitch",cat:"FPS",f:1500000,age:22,g:"M",h:178,c:"US",url:"https://twitch.tv/dizzy"},
+  {n:"Sinatraa",p:"Twitch",cat:"FPS",f:1200000,age:23,g:"M",h:178,c:"US",url:"https://twitch.tv/sinatraa"},
+  {n:"Seagull",p:"Twitch",cat:"FPS",f:1700000,age:27,g:"M",h:183,c:"US",url:"https://twitch.tv/a_seagull"},
+  {n:"Scump",p:"Twitch",cat:"FPS",f:2900000,age:29,g:"M",h:178,c:"US",url:"https://twitch.tv/scump"},
+  {n:"s1mple",p:"Twitch",cat:"FPS",f:2800000,age:26,g:"M",h:183,c:"UA",url:"https://twitch.tv/s1mple"},
+  {n:"tarik",p:"Twitch",cat:"FPS",f:2100000,age:28,g:"M",h:178,c:"US",url:"https://twitch.tv/tarik"},
+  {n:"OhnePixel",p:"Twitch",cat:"FPS",f:1100000,age:24,g:"M",h:180,c:"SE",url:"https://twitch.tv/ohnepixel"},
+  {n:"iiTzTimmy",p:"Twitch",cat:"FPS",f:1900000,age:24,g:"M",h:183,c:"US",url:"https://twitch.tv/iitztimmy"},
+  {n:"Genburten",p:"Twitch",cat:"FPS",f:1200000,age:23,g:"M",h:183,c:"AU",url:"https://twitch.tv/genburten"},
+  {n:"LilyPichu",p:"Twitch",cat:"Variety",f:1100000,age:31,g:"F",h:158,c:"US",url:"https://twitch.tv/lilypichu"},
+  {n:"xChocoBars",p:"Twitch",cat:"Variety",f:950000,age:28,g:"F",h:163,c:"CA",url:"https://twitch.tv/xchocobars"},
+  {n:"Yvonne",p:"Twitch",cat:"Variety",f:750000,age:30,g:"F",h:160,c:"CA",url:"https://twitch.tv/yvonnie"},
+  {n:"QuarterJade",p:"Twitch",cat:"Variety",f:650000,age:27,g:"F",h:163,c:"AU",url:"https://twitch.tv/quarterjade"},
+  {n:"RTGame",p:"YouTube",cat:"Variety",f:1600000,age:28,g:"M",h:180,c:"IE",url:"https://youtube.com/@rtgame"},
+  {n:"CallMeCarson",p:"YouTube",cat:"Variety",f:3600000,age:23,g:"M",h:183,c:"US",url:"https://youtube.com/@callmecarson"},
+  {n:"Alpharad",p:"YouTube",cat:"Variety",f:2000000,age:26,g:"M",h:178,c:"US",url:"https://youtube.com/@alpharad"},
+  {n:"Drew Gooden",p:"YouTube",cat:"Variety",f:3000000,age:28,g:"M",h:183,c:"US",url:"https://youtube.com/@drewgooden"},
+  {n:"Danny Gonzalez",p:"YouTube",cat:"Variety",f:3000000,age:28,g:"M",h:178,c:"US",url:"https://youtube.com/@dannygonzalez"},
+  {n:"Cody Ko",p:"YouTube",cat:"Variety",f:5000000,age:31,g:"M",h:183,c:"CA",url:"https://youtube.com/@codyko"},
+  {n:"Pyrocynical",p:"YouTube",cat:"Variety",f:3000000,age:24,g:"M",h:175,c:"UK",url:"https://youtube.com/@pyrocynical"},
+  {n:"iDubbbz",p:"YouTube",cat:"Variety",f:8000000,age:31,g:"M",h:188,c:"US",url:"https://youtube.com/@idubbbztv"},
+  {n:"Trainwreckstv",p:"Kick",cat:"Variety",f:2000000,age:32,g:"M",h:183,c:"US",url:"https://kick.com/trainwreckstv"},
+  {n:"GreekGodX",p:"Twitch",cat:"Variety",f:900000,age:31,g:"M",h:193,c:"US",url:"https://twitch.tv/greekgodx"},
+  {n:"Roshtein",p:"Kick",cat:"Variety",f:1200000,age:31,g:"M",h:183,c:"SE",url:"https://kick.com/roshtein"},
+  {n:"Jake Paul",p:"YouTube",cat:"Variety",f:20000000,age:27,g:"M",h:183,c:"US",url:"https://youtube.com/@jakepaul"},
+  {n:"Logan Paul",p:"YouTube",cat:"Variety",f:23000000,age:29,g:"M",h:188,c:"US",url:"https://youtube.com/@loganpaul"},
+  {n:"Ricegum",p:"YouTube",cat:"Variety",f:10000000,age:28,g:"M",h:183,c:"US",url:"https://youtube.com/@ricegum"},
+  {n:"Fanum",p:"Twitch",cat:"IRL",f:4000000,age:24,g:"M",h:178,c:"US",url:"https://twitch.tv/fanum"},
+  {n:"FlightReacts",p:"YouTube",cat:"Sports",f:7000000,age:27,g:"M",h:183,c:"US",url:"https://youtube.com/@flightreacts"},
+  {n:"Miz",p:"Twitch",cat:"IRL",f:2300000,age:30,g:"M",h:183,c:"US",url:"https://twitch.tv/miz"},
+  {n:"CDNthe3rd",p:"Twitch",cat:"Variety",f:2500000,age:31,g:"M",h:185,c:"US",url:"https://twitch.tv/cdnthe3rd"},
+  {n:"DougDoug",p:"Twitch",cat:"Variety",f:800000,age:27,g:"M",h:178,c:"US",url:"https://twitch.tv/dougdoug"},
+  {n:"Nmplol",p:"Twitch",cat:"IRL",f:1100000,age:32,g:"M",h:185,c:"NO",url:"https://twitch.tv/nmplol"},
+  {n:"GiantWaffle",p:"Twitch",cat:"Variety",f:900000,age:33,g:"M",h:183,c:"US",url:"https://twitch.tv/giantwaffle"},
+  {n:"Stpeach",p:"Twitch",cat:"IRL",f:1200000,age:32,g:"F",h:168,c:"CA",url:"https://twitch.tv/stpeach"},
+  {n:"Annemunition",p:"Twitch",cat:"FPS",f:800000,age:30,g:"F",h:170,c:"US",url:"https://twitch.tv/annemunition"},
+  {n:"GrayStillPlays",p:"YouTube",cat:"Variety",f:5000000,age:36,g:"M",h:183,c:"US",url:"https://youtube.com/@graystillplays"},
+  {n:"Smajor",p:"Twitch",cat:"Variety",f:900000,age:27,g:"M",h:183,c:"UK",url:"https://twitch.tv/smajor1995"},
+  {n:"Purplecliffe",p:"YouTube",cat:"Variety",f:1500000,age:23,g:"M",h:178,c:"US",url:"https://youtube.com/@purplecliffe"},
+  {n:"Lacy",p:"Twitch",cat:"Variety",f:750000,age:21,g:"F",h:163,c:"US",url:"https://twitch.tv/lacy"},
+  {n:"BobbyPoff",p:"Twitch",cat:"Variety",f:700000,age:25,g:"M",h:183,c:"US",url:"https://twitch.tv/bobbypoff"},
+  {n:"Erobb221",p:"Twitch",cat:"IRL",f:700000,age:26,g:"M",h:175,c:"US",url:"https://twitch.tv/erobb221"},
+  {n:"Maya",p:"Twitch",cat:"IRL",f:900000,age:29,g:"F",h:163,c:"US",url:"https://twitch.tv/maya"},
+  {n:"Jakenbake",p:"Twitch",cat:"IRL",f:1200000,age:30,g:"M",h:185,c:"US",url:"https://twitch.tv/jakenbake"},
+  {n:"Nihachu",p:"Twitch",cat:"Variety",f:1500000,age:22,g:"F",h:163,c:"DE",url:"https://twitch.tv/nihachu"},
+  {n:"Fundy",p:"Twitch",cat:"Variety",f:1800000,age:22,g:"M",h:183,c:"NL",url:"https://twitch.tv/fundy"},
+  {n:"Day9",p:"Twitch",cat:"Esports",f:700000,age:36,g:"M",h:178,c:"US",url:"https://twitch.tv/day9tv"},
+  {n:"Faker",p:"Twitch",cat:"Esports",f:800000,age:28,g:"M",h:173,c:"KR",url:"https://twitch.tv/faker"},
+  {n:"Tyler1",p:"Twitch",cat:"MMO/RPG",f:5300000,age:29,g:"M",h:160,c:"US",url:"https://twitch.tv/loltyler1"},
+  {n:"Scump",p:"Twitch",cat:"FPS",f:2900000,age:29,g:"M",h:178,c:"US",url:"https://twitch.tv/scump"},
+  {n:"Anomaly",p:"YouTube",cat:"FPS",f:3200000,age:26,g:"M",h:183,c:"SE",url:"https://youtube.com/@anomaly"},
+  {n:"Aculite",p:"YouTube",cat:"FPS",f:2800000,age:30,g:"M",h:185,c:"AU",url:"https://youtube.com/@aculite"},
+  {n:"chocoTaco",p:"Twitch",cat:"FPS",f:1400000,age:36,g:"M",h:178,c:"US",url:"https://twitch.tv/chocotaco"},
+  {n:"Biffle",p:"YouTube",cat:"Variety",f:4000000,age:23,g:"M",h:185,c:"US",url:"https://youtube.com/@biffle"},
+  {n:"Sigils",p:"YouTube",cat:"Variety",f:4000000,age:27,g:"M",h:183,c:"US",url:"https://youtube.com/@sigils"},
+  {n:"Henwy",p:"YouTube",cat:"Variety",f:4500000,age:25,g:"M",h:178,c:"US",url:"https://youtube.com/@henwy"},
+  {n:"Thebausffs",p:"Twitch",cat:"MMO/RPG",f:900000,age:25,g:"M",h:183,c:"DE",url:"https://twitch.tv/thebausffs"},
+  {n:"TFBlade",p:"Twitch",cat:"MMO/RPG",f:1400000,age:24,g:"M",h:175,c:"IR",url:"https://twitch.tv/tfblade"},
+  {n:"ropz",p:"Twitch",cat:"FPS",f:1200000,age:23,g:"M",h:183,c:"EE",url:"https://twitch.tv/ropz"},
+  {n:"ZeratoR",p:"Twitch",cat:"Variety",f:1000000,age:31,g:"M",h:180,c:"FR",url:"https://twitch.tv/zerator"},
+  {n:"Etoiles",p:"Twitch",cat:"Variety",f:1100000,age:28,g:"M",h:183,c:"FR",url:"https://twitch.tv/etoiles"},
+  {n:"Gotaga",p:"Twitch",cat:"FPS",f:1200000,age:29,g:"M",h:175,c:"FR",url:"https://twitch.tv/gotaga"},
+  {n:"Ponce",p:"Twitch",cat:"MMO/RPG",f:1800000,age:33,g:"M",h:180,c:"ES",url:"https://twitch.tv/ponce"},
+  {n:"Folagor",p:"Twitch",cat:"MMO/RPG",f:2500000,age:34,g:"M",h:178,c:"ES",url:"https://twitch.tv/folagor03"},
+  {n:"Saqib",p:"Twitch",cat:"FPS",f:650000,age:26,g:"M",h:178,c:"UK",url:"https://twitch.tv/saqib"},
+  {n:"Quinn",p:"YouTube",cat:"Variety",f:780000,age:23,g:"F",h:165,c:"US",url:"https://youtube.com/@quinnfinite"},
+  {n:"Nicki Taylor",p:"Twitch",cat:"IRL",f:620000,age:27,g:"F",h:170,c:"US",url:"https://twitch.tv/nickitaylor"},
+  {n:"GeminiTay",p:"YouTube",cat:"Variety",f:1500000,age:28,g:"F",h:168,c:"CA",url:"https://youtube.com/@geminitay"},
+  {n:"Wattles",p:"YouTube",cat:"Variety",f:1800000,age:27,g:"M",h:183,c:"US",url:"https://youtube.com/@wattles"},
 ];
 
-// ===== STREAMERDOKU =====
-const DOKU_COLS = [
-  { label: "Twitch Main", check: s => s.platform === "Twitch" },
-  { label: "YouTube Main", check: s => s.platform === "YouTube" },
-  { label: "Kick/Other", check: s => s.platform === "Kick" },
-];
-const DOKU_ROWS = [
-  { label: "200-800 Live Views", check: s => s.views >= 200 && s.views <= 800 },
-  { label: "5k-40k Live Views", check: s => s.views > 800 && s.views <= 40000 },
-  { label: "600k-800k YT Subs", check: s => s.yt >= 600000 && s.yt <= 800000 },
-];
+const STREAMERS=Object.values(S.reduce((a,s)=>{if(!a[s.n])a[s.n]=s;return a},{}));
 
-let dokuState = {};
-let dokuGuessCount = 0;
-let currentCell = null;
+let user=null,stats={played:0,wins:0,streak:0,best:null};
+function openAuth(){document.getElementById('auth-mo').classList.add('open')}
+function closeAuth(){document.getElementById('auth-mo').classList.remove('open')}
+function googleSignIn(){
+  const names=["StreamerFan","ProGuesser","TwitchKing","DailyPlayer","GuessMaster"];
+  user={name:names[Math.floor(Math.random()*names.length)]};
+  closeAuth();updateAuthUI();toast("Signed in as "+user.name+"!");
+  const sv=localStorage.getItem('sdle_stats');if(sv)stats=JSON.parse(sv);updateStatsUI();
+}
+function updateAuthUI(){
+  if(user){
+    document.getElementById('auth-area').innerHTML=`<button class="avatar-btn" onclick="openAuth()">${user.name[0]}</button>`;
+    document.getElementById('stats-bar').style.display='block';updateStatsUI();
+  } else {
+    document.getElementById('auth-area').innerHTML=`<button class="auth-btn primary" onclick="openAuth()">Sign In</button>`;
+    document.getElementById('stats-bar').style.display='none';
+  }
+}
+function updateStatsUI(){
+  document.getElementById('sp').textContent=stats.played;
+  document.getElementById('sw').textContent=stats.wins;
+  document.getElementById('ss').textContent=stats.streak;
+  document.getElementById('sb').textContent=stats.best??'-';
+}
+function saveStats(){localStorage.setItem('sdle_stats',JSON.stringify(stats));}
 
-function initDoku() {
-  dokuState = {};
-  dokuGuessCount = 0;
-  renderDokuGrid();
-  updateDokuScore();
+let mode='daily',target=null,guesses=[];
+const MAX=8;
+function dayNum(){return Math.floor((Date.now()-new Date('2026-01-01'))/86400000);}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('md-daily').classList.toggle('active',m==='daily');
+  document.getElementById('md-free').classList.toggle('active',m==='free');
+  document.getElementById('daily-banner').style.display=m==='daily'?'block':'none';
+  initDle();
 }
 
-function renderDokuGrid() {
-  const grid = document.getElementById('doku-grid');
-  grid.innerHTML = '';
+function initDle(){
+  const dn=dayNum();
+  document.getElementById('day-num').textContent=dn;
+  if(mode==='daily'){
+    target=STREAMERS[dn%STREAMERS.length];
+    const sv=localStorage.getItem('sdle_d_'+dn);
+    if(sv){
+      const d=JSON.parse(sv);guesses=[];
+      document.getElementById('dle-rows').innerHTML='';
+      document.getElementById('dle-result').className='result';
+      document.getElementById('dle-new').style.display='none';
+      document.getElementById('dle-in').disabled=false;
+      document.getElementById('dle-btn').disabled=false;
+      d.g.forEach(name=>{const s=STREAMERS.find(x=>x.n===name);if(s){guesses.push(s);renderRow(s);}});
+      if(d.done)endDle(d.won,true);
+      renderPips();return;
+    }
+  } else {
+    target=STREAMERS[Math.floor(Math.random()*STREAMERS.length)];
+  }
+  guesses=[];
+  document.getElementById('dle-rows').innerHTML='';
+  document.getElementById('dle-in').value='';
+  document.getElementById('dle-in').disabled=false;
+  document.getElementById('dle-btn').disabled=false;
+  document.getElementById('dle-result').className='result';
+  document.getElementById('dle-new').style.display='none';
+  document.getElementById('dle-ac').className='ac';
+  renderPips();
+}
 
-  const corner = document.createElement('div');
-  corner.className = 'doku-corner';
-  grid.appendChild(corner);
+function renderPips(){
+  const c=document.getElementById('pips');c.innerHTML='';
+  for(let i=0;i<MAX;i++){const p=document.createElement('div');p.className='pip';if(i<guesses.length)p.classList.add('used');c.appendChild(p);}
+}
 
-  DOKU_COLS.forEach(c => {
-    const h = document.createElement('div');
-    h.className = 'doku-col-header';
-    h.textContent = c.label;
-    grid.appendChild(h);
+function dleFill(){
+  const v=document.getElementById('dle-in').value.toLowerCase();
+  const ac=document.getElementById('dle-ac');
+  if(!v){ac.className='ac';return;}
+  const used=guesses.map(g=>g.n);
+  const m=STREAMERS.filter(s=>s.n.toLowerCase().includes(v)&&!used.includes(s.n)).slice(0,8);
+  if(!m.length){ac.className='ac';return;}
+  ac.innerHTML=m.map(s=>`<div class="ac-item" onclick="pickAc('${s.n.replace(/'/g,"\\'")}')"><span>${s.n}</span><span class="ac-plat">${s.p}</span></div>`).join('');
+  ac.className='ac open';
+}
+function pickAc(n){document.getElementById('dle-in').value=n;document.getElementById('dle-ac').className='ac';}
+
+function dleGuess(){
+  const v=document.getElementById('dle-in').value.trim();
+  const s=STREAMERS.find(x=>x.n.toLowerCase()===v.toLowerCase());
+  if(!s){toast('Not in the list!');return;}
+  if(guesses.find(g=>g.n===s.n)){toast('Already guessed!');return;}
+  guesses.push(s);
+  document.getElementById('dle-in').value='';
+  document.getElementById('dle-ac').className='ac';
+  renderRow(s);renderPips();
+  if(s.n===target.n)endDle(true);
+  else if(guesses.length>=MAX)endDle(false);
+}
+
+function fl(f){if(f>=1000000)return(f/1000000).toFixed(1)+'M';if(f>=1000)return Math.round(f/1000)+'K';return f;}
+function ns(g,t,r){if(g===t)return{cls:'correct',a:''};if(Math.abs(g-t)<=r)return{cls:'close',a:g<t?'↑':'↓'};return{cls:'wrong',a:g<t?'↑':'↓'};}
+function cs(g,t){if(g===t)return'correct';const m={FPS:'act',Esports:'act','MMO/RPG':'rpg',IRL:'irl','IRL/Politics':'irl',VTuber:'vt'};return(m[g]&&m[g]===m[t])?'close':'wrong';}
+function fs(g,t){const r=Math.abs(g-t)/Math.max(t,1);if(r<0.2)return{cls:'correct',a:''};if(r<0.6)return{cls:'close',a:g<t?'↑':'↓'};return{cls:'wrong',a:g<t?'↑':'↓'};}
+function ctrS(g,t){if(g===t)return'correct';const ang=['US','CA','UK','AU'];return(ang.includes(g)&&ang.includes(t))?'close':'wrong';}
+
+function renderRow(s){
+  const t=target,row=document.createElement('div');row.className='gr';
+  const nc=document.createElement('div');nc.className='name-cell';nc.textContent=s.n;row.appendChild(nc);
+  const sc=cs(s.cat,t.cat),sf=fs(s.f,t.f),sp=s.p===t.p?'correct':'wrong',
+        sa=ns(s.age,t.age,3),sg=s.g===t.g?'correct':'wrong',
+        sh=ns(s.h,t.h,5),sct=ctrS(s.c,t.c);
+  [
+    {cls:sc,v:s.cat,a:''},
+    {cls:sf.cls,v:fl(s.f),a:sf.a},
+    {cls:sp,v:s.p,a:''},
+    {cls:sa.cls,v:s.age+'y',a:sa.a},
+    {cls:sg,v:s.g==='M'?'Male':'Female',a:''},
+    {cls:sh.cls,v:s.h+'cm',a:sh.a},
+    {cls:sct,v:s.c,a:''}
+  ].forEach(st=>{
+    const c=document.createElement('div');c.className='sc '+st.cls;
+    c.innerHTML=(st.a?`<span class="arrow">${st.a}</span>`:'')+`<span>${st.v}</span>`;
+    row.appendChild(c);
   });
+  document.getElementById('dle-rows').prepend(row);
+}
 
-  DOKU_ROWS.forEach((row, ri) => {
-    const rh = document.createElement('div');
-    rh.className = 'doku-row-header';
-    rh.textContent = row.label;
-    grid.appendChild(rh);
+function shareText(won){
+  const dn=dayNum();
+  const lines=[`STREAMERDLE #${dn} ${won?guesses.length:'X'}/${MAX}\n`];
+  guesses.forEach(s=>{
+    const t=target;
+    const e=c=>c==='correct'?'🟩':c==='close'?'🟨':'⬜';
+    lines.push(e(cs(s.cat,t.cat))+e(fs(s.f,t.f).cls)+e(s.p===t.p?'correct':'wrong')+e(ns(s.age,t.age,3).cls)+e(s.g===t.g?'correct':'wrong')+e(ns(s.h,t.h,5).cls)+e(ctrS(s.c,t.c)));
+  });
+  return lines.join('\n');
+}
 
-    DOKU_COLS.forEach((col, ci) => {
-      const key = `${ri}-${ci}`;
-      const cell = document.createElement('div');
-      cell.className = 'doku-cell' + (dokuState[key] ? ' filled' : '');
-      cell.id = 'dc-' + key;
-      if (dokuState[key]) {
-        cell.innerHTML = `<div class="cell-name">${dokuState[key]}</div>`;
+function endDle(won,already){
+  document.getElementById('dle-in').disabled=true;
+  document.getElementById('dle-btn').disabled=true;
+  const res=document.getElementById('dle-result');
+  res.className='result show '+(won?'win':'lose');
+  const link=`<a class="result-link" href="${target.url}" target="_blank">Watch ${target.n}</a>`;
+  const st=shareText(won);
+  res.innerHTML=(won
+    ?`<div class="result-title" style="color:var(--green)">GOT IT!</div><div class="result-sub">You found <strong>${target.n}</strong> in ${guesses.length} guess${guesses.length>1?'es':''}!</div>`
+    :`<div class="result-title" style="color:var(--red)">MISSED IT</div><div class="result-sub">The answer was <strong>${target.n}</strong>.</div>`
+  )+link+`<br><button class="share-btn" onclick="doShare()">Share Result</button>`;
+  if(mode==='free')document.getElementById('dle-new').style.display='block';
+  window._st=st;
+  if(!already){
+    if(mode==='daily')localStorage.setItem('sdle_d_'+dayNum(),JSON.stringify({g:guesses.map(g=>g.n),done:true,won}));
+    if(user){stats.played++;if(won){stats.wins++;stats.streak++;if(!stats.best||guesses.length<stats.best)stats.best=guesses.length;}else stats.streak=0;saveStats();updateStatsUI();}
+  }
+}
+function doShare(){
+  if(navigator.clipboard){navigator.clipboard.writeText(window._st||'');toast('Copied to clipboard!');}
+  else prompt('Copy this:',window._st||'');
+}
+
+const DCOLS=[
+  {l:"Twitch",ck:s=>s.p==="Twitch"},
+  {l:"YouTube",ck:s=>s.p==="YouTube"},
+  {l:"Kick",ck:s=>s.p==="Kick"},
+];
+const DROW_POOLS=[
+  [{l:"Female creator",ck:s=>s.g==="F"},{l:"Male creator",ck:s=>s.g==="M"}],
+  [{l:"500K–2M followers",ck:s=>s.f>=500000&&s.f<2000000},{l:"2M–10M followers",ck:s=>s.f>=2000000&&s.f<10000000},{l:"10M+ followers",ck:s=>s.f>=10000000}],
+  [{l:"FPS player",ck:s=>s.cat==="FPS"},{l:"Variety streamer",ck:s=>s.cat==="Variety"},{l:"IRL creator",ck:s=>s.cat==="IRL"||s.cat==="IRL/Politics"},{l:"VTuber",ck:s=>s.cat==="VTuber"},{l:"MMO/RPG player",ck:s=>s.cat==="MMO/RPG"}],
+  [{l:"From US",ck:s=>s.c==="US"},{l:"From UK",ck:s=>s.c==="UK"},{l:"From Canada",ck:s=>s.c==="CA"},{l:"From Australia",ck:s=>s.c==="AU"},{l:"Non-English country",ck:s=>!["US","UK","CA","AU"].includes(s.c)}],
+  [{l:"Under 22 years old",ck:s=>s.age<22},{l:"Age 22–27",ck:s=>s.age>=22&&s.age<=27},{l:"Age 28–33",ck:s=>s.age>=28&&s.age<=33},{l:"Age 34+",ck:s=>s.age>=34}],
+  [{l:"Under 170cm tall",ck:s=>s.h<170},{l:"170–180cm tall",ck:s=>s.h>=170&&s.h<=180},{l:"Over 180cm tall",ck:s=>s.h>180}],
+];
+
+let dSt={},dG=0,dRows=[],curCell=null;
+
+function pickRows(){
+  const picked=[];
+  [...DROW_POOLS].sort(()=>Math.random()-.5).slice(0,3).forEach(pool=>{
+    const valid=pool.filter(row=>DCOLS.every(col=>STREAMERS.some(s=>row.ck(s)&&col.ck(s))));
+    picked.push(valid.length?valid[Math.floor(Math.random()*valid.length)]:pool[0]);
+  });
+  return picked;
+}
+
+function initDoku(){dSt={};dG=0;dRows=pickRows();renderDoku();updateDS();}
+
+function renderDoku(){
+  const g=document.getElementById('doku-grid');g.innerHTML='';
+  const co=document.createElement('div');co.className='doku-corner';g.appendChild(co);
+  DCOLS.forEach(c=>{const h=document.createElement('div');h.className='doku-col-hd';h.textContent=c.l;g.appendChild(h);});
+  dRows.forEach((row,ri)=>{
+    const rh=document.createElement('div');rh.className='doku-row-hd';rh.textContent=row.l;g.appendChild(rh);
+    DCOLS.forEach((col,ci)=>{
+      const k=`${ri}-${ci}`,cell=document.createElement('div');
+      cell.className='doku-cell'+(dSt[k]?' filled':'');cell.id='dc-'+k;
+      if(dSt[k]){
+        const s=STREAMERS.find(x=>x.n===dSt[k]);
+        cell.innerHTML=`<div class="cell-name">${dSt[k]}</div><a class="cell-link" href="${s?.url||'#'}" target="_blank">Watch</a>`;
       } else {
-        cell.innerHTML = `<span style="font-size:20px;color:var(--border)">+</span>`;
-        cell.onclick = () => openDokuModal(ri, ci);
+        cell.innerHTML='<span style="font-size:20px;color:var(--border)">+</span>';
+        cell.onclick=()=>openDM(ri,ci);
       }
-      grid.appendChild(cell);
+      g.appendChild(cell);
     });
   });
 }
 
-function openDokuModal(ri, ci) {
-  currentCell = { ri, ci };
-  const row = DOKU_ROWS[ri], col = DOKU_COLS[ci];
-  document.getElementById('modal-title').textContent = 'Who fits this cell?';
-  document.getElementById('modal-sub').textContent = `${row.label} + ${col.label}`;
-  document.getElementById('modal-search').value = '';
-  renderModalList('');
-  document.getElementById('doku-modal-overlay').style.display = 'flex';
+function openDM(ri,ci){
+  curCell={ri,ci};
+  document.getElementById('mo-title').textContent='Who fits?';
+  document.getElementById('mo-sub').textContent=dRows[ri].l+' AND '+DCOLS[ci].l;
+  document.getElementById('mo-search').value='';
+  renderML('');
+  document.getElementById('doku-mo').classList.add('open');
 }
-
-function closeModal() {
-  document.getElementById('doku-modal-overlay').style.display = 'none';
+function closeDokuModal(){document.getElementById('doku-mo').classList.remove('open');}
+function renderML(f){
+  const used=Object.values(dSt);
+  const m=STREAMERS.filter(s=>s.n.toLowerCase().includes(f.toLowerCase())&&!used.includes(s.n));
+  document.getElementById('mo-list').innerHTML=m.map(s=>`<div class="mb-item" onclick="pickS('${s.n.replace(/'/g,"\\'")}')"><span>${s.n}</span><span class="pt">${s.p}</span></div>`).join('')||'<div style="padding:8px;font-size:11px;color:var(--muted)">No results</div>';
 }
-
-function renderModalList(filter) {
-  const used = Object.values(dokuState);
-  const list = document.getElementById('modal-list');
-  const matches = STREAMERS.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) && !used.includes(s.name));
-  list.innerHTML = matches.map(s =>
-    `<div class="modal-item" onclick="pickStreamer('${s.name}')">${s.name} <span class="platform-tag">${s.platform}</span></div>`
-  ).join('') || '<div style="padding:8px;font-size:12px;color:var(--muted)">No results</div>';
-}
-
-function filterModalList() {
-  renderModalList(document.getElementById('modal-search').value);
-}
-
-function pickStreamer(name) {
-  const { ri, ci } = currentCell;
-  const key = `${ri}-${ci}`;
-  const s = STREAMERS.find(x => x.name === name);
-  dokuGuessCount++;
-
-  if (DOKU_ROWS[ri].check(s) && DOKU_COLS[ci].check(s)) {
-    dokuState[key] = name;
-    closeModal();
-    renderDokuGrid();
-    updateDokuScore();
-    if (Object.keys(dokuState).length === 9) {
-      setTimeout(() => alert('Incredible! You completed the StreamerDoku grid!'), 100);
-    }
+function filterList(){renderML(document.getElementById('mo-search').value);}
+function pickS(name){
+  const{ri,ci}=curCell,k=`${ri}-${ci}`;
+  const s=STREAMERS.find(x=>x.n===name);dG++;
+  if(dRows[ri].ck(s)&&DCOLS[ci].ck(s)){
+    dSt[k]=name;closeDokuModal();renderDoku();updateDS();
+    if(Object.keys(dSt).length===9)toast('StreamerDoku complete!');
   } else {
-    const cell = document.getElementById('dc-' + key);
-    if (cell) { cell.classList.add('wrong'); setTimeout(() => cell.classList.remove('wrong'), 600); }
-    const li = document.getElementById('modal-list');
-    li.innerHTML = `<div style="padding:8px;font-size:12px;color:var(--red);font-weight:500">${name} doesn't fit! Try again.</div>` + li.innerHTML;
-    updateDokuScore();
+    const cell=document.getElementById('dc-'+k);
+    if(cell){cell.classList.add('wrong');setTimeout(()=>cell.classList.remove('wrong'),600);}
+    toast(name+" doesn't fit — try again!");updateDS();
   }
 }
-
-function updateDokuScore() {
-  const f = Object.keys(dokuState).length;
-  document.getElementById('doku-filled').textContent = f;
-  document.getElementById('doku-remain').textContent = 9 - f;
-  document.getElementById('doku-guesses').textContent = dokuGuessCount;
+function updateDS(){
+  const f=Object.keys(dSt).length;
+  document.getElementById('df').textContent=f;
+  document.getElementById('dr').textContent=9-f;
+  document.getElementById('dg').textContent=dG;
 }
 
-// ===== STREAMERDLE =====
-let dleTarget = null;
-let dleGuesses = [];
-const MAX_GUESSES = 8;
-
-const CATS = ["FPS","Variety","IRL","IRL/Politics","MMO/RPG"];
-const PLATS = ["Twitch","YouTube","Kick"];
-
-function initDle() {
-  dleTarget = STREAMERS[Math.floor(Math.random() * STREAMERS.length)];
-  dleGuesses = [];
-  document.getElementById('dle-rows').innerHTML = '';
-  document.getElementById('dle-input').value = '';
-  document.getElementById('dle-input').disabled = false;
-  document.getElementById('dle-btn').disabled = false;
-  document.getElementById('dle-win').style.display = 'none';
-  document.getElementById('dle-win').className = 'dle-win-msg';
-  document.getElementById('dle-new-btn').style.display = 'none';
-  document.getElementById('dle-ac').className = 'dle-autocomplete';
-  document.getElementById('dle-header').style.display = 'grid';
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='dle')||(i===1&&t==='doku')));
+  document.getElementById('panel-dle').classList.toggle('active',t==='dle');
+  document.getElementById('panel-doku').classList.toggle('active',t==='doku');
 }
 
-function dleAutocomplete() {
-  const val = document.getElementById('dle-input').value.toLowerCase();
-  const ac = document.getElementById('dle-ac');
-  if (!val) { ac.className = 'dle-autocomplete'; return; }
-  const used = dleGuesses.map(g => g.name);
-  const matches = STREAMERS.filter(s => s.name.toLowerCase().includes(val) && !used.includes(s.name)).slice(0, 6);
-  if (!matches.length) { ac.className = 'dle-autocomplete'; return; }
-  ac.innerHTML = matches.map(s => `<div class="dle-ac-item" onclick="selectAc('${s.name}')">${s.name}</div>`).join('');
-  ac.className = 'dle-autocomplete open';
-}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-function selectAc(name) {
-  document.getElementById('dle-input').value = name;
-  document.getElementById('dle-ac').className = 'dle-autocomplete';
-}
-
-function dleGuess() {
-  const val = document.getElementById('dle-input').value.trim();
-  const s = STREAMERS.find(x => x.name.toLowerCase() === val.toLowerCase());
-  if (!s) { alert('Streamer not found in the list!'); return; }
-  if (dleGuesses.find(g => g.name === s.name)) { alert('Already guessed!'); return; }
-
-  dleGuesses.push(s);
-  document.getElementById('dle-input').value = '';
-  document.getElementById('dle-ac').className = 'dle-autocomplete';
-
-  renderDleRow(s);
-
-  if (s.name === dleTarget.name) {
-    endDle(true);
-  } else if (dleGuesses.length >= MAX_GUESSES) {
-    endDle(false);
-  }
-}
-
-function viewVal(v) {
-  if (v >= 1000000) return (v/1000000).toFixed(1)+'M';
-  if (v >= 1000) return Math.round(v/1000)+'k';
-  return v.toString();
-}
-
-function renderDleRow(s) {
-  const t = dleTarget;
-  const row = document.createElement('div');
-  row.className = 'dle-guess-row';
-
-  const nameCell = document.createElement('div');
-  nameCell.className = 'dle-name-cell';
-  nameCell.textContent = s.name;
-  row.appendChild(nameCell);
-
-  const catC = catScore(s.category, t.category);
-  const viewC = viewScore(s.views, t.views, s.yt, t.yt);
-  const platC = s.platform === t.platform ? 'correct' : 'wrong';
-  const ageC = numScore(s.age, t.age, 3);
-  const genC = s.gender === t.gender ? 'correct' : 'wrong';
-  const htC = numScore(s.height, t.height, 5);
-
-  const stats = [
-    { cls: catC, val: s.category, arrow: '' },
-    { cls: viewC.cls, val: viewVal(s.views > 0 ? s.views : s.yt), arrow: viewC.arrow },
-    { cls: platC, val: s.platform, arrow: '' },
-    { cls: ageC.cls, val: s.age, arrow: ageC.arrow },
-    { cls: genC, val: s.gender === 'M' ? 'Male' : 'Female', arrow: '' },
-    { cls: htC.cls, val: s.height + 'cm', arrow: htC.arrow },
-  ];
-
-  stats.forEach(st => {
-    const c = document.createElement('div');
-    c.className = 'dle-stat-cell ' + st.cls;
-    c.innerHTML = (st.arrow ? `<span class="arrow">${st.arrow}</span>` : '') + `<span>${st.val}</span>`;
-    row.appendChild(c);
-  });
-
-  document.getElementById('dle-rows').prepend(row);
-}
-
-function catScore(g, t) {
-  if (g === t) return 'correct';
-  const broad = { 'FPS': 'action', 'MMO/RPG': 'action', 'Variety': 'variety', 'IRL': 'irl', 'IRL/Politics': 'irl' };
-  return broad[g] === broad[t] ? 'close' : 'wrong';
-}
-
-function viewScore(gv, tv, gy, ty) {
-  const geff = gv > 0 ? gv : gy / 1000;
-  const teff = tv > 0 ? tv : ty / 1000;
-  if (Math.abs(geff - teff) / Math.max(teff, 1) < 0.2) return { cls: 'correct', arrow: '' };
-  if (Math.abs(geff - teff) / Math.max(teff, 1) < 0.6) return { cls: 'close', arrow: geff < teff ? '↑' : '↓' };
-  return { cls: 'wrong', arrow: geff < teff ? '↑' : '↓' };
-}
-
-function numScore(g, t, range) {
-  if (g === t) return { cls: 'correct', arrow: '' };
-  if (Math.abs(g - t) <= range) return { cls: 'close', arrow: g < t ? '↑' : '↓' };
-  return { cls: 'wrong', arrow: g < t ? '↑' : '↓' };
-}
-
-function endDle(won) {
-  document.getElementById('dle-input').disabled = true;
-  document.getElementById('dle-btn').disabled = true;
-  const win = document.getElementById('dle-win');
-  win.style.display = 'block';
-  if (won) {
-    win.innerHTML = `<div class="wt">NICE!</div><div style="font-size:13px;margin-top:4px;">You got <strong>${dleTarget.name}</strong> in ${dleGuesses.length} guess${dleGuesses.length>1?'es':''}!</div>`;
-    win.classList.add('show');
-  } else {
-    win.innerHTML = `<div class="wt" style="color:var(--red)">OUT!</div><div style="font-size:13px;margin-top:4px;">The streamer was <strong>${dleTarget.name}</strong>.</div>`;
-    win.classList.add('show', 'dle-lose-msg');
-  }
-  document.getElementById('dle-new-btn').style.display = 'block';
-}
-
-// ===== TABS =====
-function switchTab(t) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i===0&&t==='doku')||(i===1&&t==='dle')));
-  document.getElementById('panel-doku').classList.toggle('active', t === 'doku');
-  document.getElementById('panel-dle').classList.toggle('active', t === 'dle');
-}
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('.dle-autocomplete') && !e.target.closest('.dle-input')) {
-    document.getElementById('dle-ac').className = 'dle-autocomplete';
-  }
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.ac')&&!e.target.closest('#dle-in'))document.getElementById('dle-ac').className='ac';
+  if(e.target===document.getElementById('auth-mo'))closeAuth();
+  if(e.target===document.getElementById('doku-mo'))closeDokuModal();
 });
 
-initDoku();
-initDle();
+initDle();initDoku();
 </script>
+</body>
+</html>
